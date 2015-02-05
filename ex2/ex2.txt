@@ -1,0 +1,34 @@
+Exercise 2: Bottlenecks
+
+What is:
+
+- An atomic operation?
+
+An operation during which a processor can simultaneously read a location 
+and write it in the same bus operation. This prevents any other processor 
+or I/O device from writing or reading memory until the operation is complete.
+
+
+- A semaphore?
+
+A semaphore is a variable used to limit the number of tasks that can simultaneously 
+operate on a shared resource. 
+
+A semaphore is allways greater than 0.
+It has two operations:
+	wait()   -decrements by one
+	signal() -increments by one
+Cannot decrement if the value is 0.
+	- Thread(s) will get access when someone else signals.
+
+
+- A mutex?
+
+A mutex is a like a binary semaphore (can only have values 1 or 0, single access), 
+but only the one using it can unlock it (signal()).
+
+
+- A critical section?
+
+A critical section is a part of code that accesses a shared resource that cannot 
+be accessed by more than one thread.
