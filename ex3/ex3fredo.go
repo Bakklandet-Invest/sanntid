@@ -100,6 +100,16 @@ func readDelimTermTCP(reader *bufio.Reader){
 	return
 }
 
+/*
+func writeDelimTermTCP(connection *TCPConn, msg string){
+	connection.Write([]byte(msg + "\x00"))
+}
+
+func writeFixSizeTCP(connection *TCPConn, msg string){
+	connection.Write([]byte(msg))
+}
+*/
+
 func listenTCP() {
 
 
