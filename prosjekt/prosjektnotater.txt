@@ -37,3 +37,10 @@ Innhold i:
 		annet:
 			- dele informasjon med de andre heisene
 			- ta imot og lagre informasjon fra de andre heisene
+
+
+pakkesending bruk JSON / MARSHALL
+
+finne måte å holde funksjonen gående mens go routines kjører
+
+

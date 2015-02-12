@@ -3,77 +3,94 @@ package main
 import (
 	"fmt"
 	"net"
-	"strconv"
 	"bufio"
 	"os"
 	"runtime"
+	"strings"
+	"time"
 )
 
-const string selfIP = "129.241.187.144"
-const string targIP = "129.241.187.136"
+const selfIP = "129.241.187.144"
+const targIP = "129.241.187.136"
 
-const string sendPort = "20013"
-const string recievePort = "30000"
-const string fixSizePort = "34933"
-const string delimTermPort = "33546"
+const writePort = "20013"
+const recievePort = "30000"
+const fixSizePort = "34933"
+const readPort = "33546"
 
-func connect(targetIP string, targetPort string) {
+func connect(targetIP string, targetPort string) *net.TCPConn {
 	TCPAddr, _ := net.ResolveTCPAddr("tcp", targetIP + ":" + targetPort)	
 	conn, err := net.DialTCP("tcp", nil, TCPAddr)
 	//defer conn.Close()
     if err!= nil {
     	fmt.Fprintln(os.Stderr, "Tried to connect to: " + targetIP + ":" + targetPort)
     	fmt.Fprintln(os.Stderr, " Connection error: " + err.Error())
-       	return
+       	return conn
     }
-    //reader := bufio.NewReaderSize(conn, 1024)	
-	return *TCPConn
+	return conn
 }
 
-
-func disconnect(connection *TCPConn) {
+/*
+func disconnect(connection *net.TCPConn) {
 	connection.Close()
+	return
 }
+*/
 
+func write(connection *net.TCPConn, msg string, reader *bufio.Reader){
+	for {
+    	fmt.Print("Enter text: ")
+    	msg, _ = reader.ReadString('\n')
 
-func write(connection *TCPConn, msg string){
-	connection.Write([]byte(msg + "\0"))
+    	connection.Write([]byte(msg[:len(msg)-1] + "\000"))
+		
+		time.Sleep(1*time.Millisecond)
+		
+		if strings.ToLower(msg) == "disconnect\n" {break}	
+	}
 	return
 }
 
 
 func read(reader *bufio.Reader){
-	str, err := reader.ReadString('\0')
-	if err != nil {
-		fmt.Fprintln(os.Stderr, "Delim error: " + err.Error())
-		return
+	for {
+		str, err := reader.ReadString('\000')
+		if err != nil {
+			fmt.Fprintln(os.Stderr, "Delim error: " + err.Error())
+			return
+		}
+		fmt.Println("Melding: " + str)
+		if strings.ToLower(str) == "disconnect\000" {break}
 	}
-	fmt.Println("Melding: " + str)
 	return
 }
 
 
+
+
 func main() {
-	
+
+	ch := make(chan string)
+
 	runtime.GOMAXPROCS(runtime.NumCPU())
 	
-	var msg string = "Initialized"
-	SendMsgReader := bufio.NewReader(os.Stdin)
+	
+	Conn := connect(targIP, readPort)
+	
+	var message string = "Initialized"
+	sendMsgReader := bufio.NewReader(os.Stdin)
+	receiveMsgReader := bufio.NewReader(Conn)
+	
+	go read(receiveMsgReader)
+	time.Sleep(1*time.Millisecond)
+	go write(Conn, message, sendMsgReader)
+	
+	
+	
+	<- ch
 
-
-	writeConn := connect(targIP, writePort)
-	readConn := connect(targIP, readPort)
-
-	while(string.ToLower(msg) != "disconnect"){
-
-    fmt.Print("Enter text: ")
-    text, _ := SendMsgReader.ReadString('\n')
-    fmt.Println(text)
-	}
-
-
-
-
+	Conn.Close()
+	
 }
 
 
