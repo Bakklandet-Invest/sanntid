@@ -54,13 +54,21 @@ func read(reader *bufio.Reader){
 
 
 func main() {
-	var msg string = "Initialized"
+	
 	runtime.GOMAXPROCS(runtime.NumCPU())
+	
+	var msg string = "Initialized"
+	SendMsgReader := bufio.NewReader(os.Stdin)
+
+
 	writeConn := connect(targIP, writePort)
 	readConn := connect(targIP, readPort)
 
 	while(string.ToLower(msg) != "disconnect"){
-		fmt.Println("Say: ")
+
+    fmt.Print("Enter text: ")
+    text, _ := SendMsgReader.ReadString('\n')
+    fmt.Println(text)
 	}
 
 
