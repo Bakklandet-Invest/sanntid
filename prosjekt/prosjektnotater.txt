@@ -42,5 +42,12 @@ Innhold i:
 pakkesending bruk JSON / MARSHALL
 
 finne måte å holde funksjonen gående mens go routines kjører
+	lag en channel og send til denne når routinen er ferdig
 
+
+start opp med å broadcaste ip
+de andre starter med å lytte
+hvis de som lytter ikke mottar ip vil de broadcaste sin ip
+
+den som sender ut sin ip vil være master
 
