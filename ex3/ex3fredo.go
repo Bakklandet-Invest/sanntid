@@ -59,11 +59,11 @@ func listenUDP() {
     	panic(err)
 	}
 	fmt.Println("listen")
-	//err = sock.SetReadDeadline(1000*time.Millisecond)
+	//err = sock.SetReadDeadline(Now().Add(Second*2))
 	if err != nil {
     	panic(err)
 	}
-	_, senderAddr, err := sock.ReadFromUDP(str[:])
+	_, senderAddr, err := sock.ReadFromUDP(str[0:])
 	if err != nil {
     	panic(err)
 	}	
