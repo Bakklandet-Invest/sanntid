@@ -12,6 +12,7 @@ import (
 
 const selfIP = "129.241.187.144"
 const targIP = "129.241.187.136"
+const broadcastIP = "129.241.187.255"
 
 const writePort = "20013"
 const recievePort = "30000"
@@ -51,7 +52,6 @@ func write(connection *net.TCPConn, msg string, reader *bufio.Reader){
 	return
 }
 
-
 func read(reader *bufio.Reader){
 	for {
 		str, err := reader.ReadString('\000')
@@ -65,7 +65,57 @@ func read(reader *bufio.Reader){
 	return
 }
 
+/* KANSKJE EN UBRUKELIG FUNC
 
+func findLocalIP() string {
+	addrs, err := net.InterfaceAddrs()
+	//handle err
+	switch v := addr.(type) {
+        case *net.IPAddr:
+            // process IP address
+        }
+	return localIP
+}*/
+
+func broadcastIP(net.*UDPConn){
+
+	return
+}
+
+
+func senderUDP() net.*UDPConn {
+	addr, _ := net.ResolveUDPAddr("udp", broadcastIP + ":" + writePort)
+	sock, _ := net.DialUDP("udp", nil, addr)
+	
+	/*
+	melding := "sup"
+	byteMelding := []byte(melding)
+	sock.Write(byteMelding)
+	*/
+	return sock
+}
+
+func listenUDP(){
+	str := make([]byte, 1024)
+	addr, _ := net.ResolveUDPAddr("udp", ":" + recievePort)
+	sock, _ := net.ListenUDP("udp", addr)
+	
+	/*
+	_, senderAddr, _ := sock.ReadFromUDP(str[:])
+	fmt.Println("message: ")
+	fmt.Println(string(str))
+	fmt.Println("from addr: ")
+	fmt.Println(senderAddr)
+	*/
+	
+	/*
+	if err != nil {
+		fmt.println("Error: " + err.Error())
+		return
+	}
+	*/
+	return
+}
 
 
 func main() {
