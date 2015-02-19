@@ -11,7 +11,7 @@ import (
 	)
 
 const compIP = "129.241.187.144"
-const sendPort = "20013"
+const sendPort = "20012"
 const broadcastIP = "129.241.187.255"
 const serverIP = "129.241.187.136"
 const recievePort = "30000"
@@ -26,21 +26,48 @@ const delimTermPort = "33546"
 
 
 func sendUDP() {
-	addr, _ := net.ResolveUDPAddr("udp", broadcastIP + ":" + sendPort)
-	sock, _ := net.DialUDP("udp", nil, addr)
+	fmt.Println("start send\n")
+	addr, err := net.ResolveUDPAddr("udp", compIP + ":" + sendPort)
+	if err != nil {
+    	panic(err)
+	}
+	fmt.Println("resolve\n")
+	sock, err := net.DialUDP("udp", nil, addr)
+	if err != nil {
+    	panic(err)
+	}	
+	fmt.Println("dial\n")
 	melding := "sup"
 	byteMelding := []byte(melding)
+	for {
 	sock.Write(byteMelding)
+	}	
+	fmt.Println("write\n")
 	return
 	
 }
 
 func listenUDP() {
 	str := make([]byte, 1024)
-	addr, _ := net.ResolveUDPAddr("udp", ":" + recievePort)
-	sock, _ := net.ListenUDP("udp", addr)
-	
-	_, senderAddr, _ := sock.ReadFromUDP(str[:])
+	addr, err := net.ResolveUDPAddr("udp", ":" + recievePort)
+	if err != nil {
+    	panic(err)
+	}
+	fmt.Println("resolve 2")
+	sock, err := net.ListenUDP("udp", addr)
+	if err != nil {
+    	panic(err)
+	}
+	fmt.Println("listen")
+	//err = sock.SetReadDeadline(1000*time.Millisecond)
+	if err != nil {
+    	panic(err)
+	}
+	_, senderAddr, err := sock.ReadFromUDP(str[:])
+	if err != nil {
+    	panic(err)
+	}	
+	fmt.Println("read")	
 	fmt.Println("message: ")
 	fmt.Println(string(str))
 	fmt.Println("from addr: ")
@@ -119,9 +146,11 @@ func listenTCP() {
 
 func main() {
 	runtime.GOMAXPROCS(runtime.NumCPU())
-	go connTCP(fixSizePort, readFixSizeTCP)	
 	
-	go connTCP(delimTermPort, readDelimTermTCP)	
-	time.Sleep(1000*time.Millisecond)
+	go sendUDP()
+	
+	go listenUDP()	
+	
+	time.Sleep(10000*time.Millisecond)
 	return
 }
