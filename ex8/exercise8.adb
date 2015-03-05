@@ -1,51 +1,50 @@
 with Ada.Text_IO, Ada.Integer_Text_IO, Ada.Numerics.Float_Random;
 use  Ada.Text_IO, Ada.Integer_Text_IO, Ada.Numerics.Float_Random;
 
-procedure exercise7 is
+procedure exercise8 is
 
     Count_Failed    : exception;    -- Exception to be raised when counting fails
     Gen             : Generator;    -- Random number generator
 
     protected type Transaction_Manager (N : Positive) is
         entry Finished;
-        function Commit return Boolean;
+        entry Wait_Until_Aborted;
         procedure Signal_Abort;
     private
         Finished_Gate_Open  : Boolean := False;
         Aborted             : Boolean := False;
-        Should_Commit       : Boolean := True;
     end Transaction_Manager;
     protected body Transaction_Manager is
         entry Finished when Finished_Gate_Open or Finished'Count = N is
         begin
             ------------------------------------------
-            -- PART 3: Complete the exit protocol here
+            -- EX7: PART 3: Complete the exit protocol here
 
             if Finished'Count = N-1 then
-		Finished_Gate_Open := True;
-		Should_Commit := True;
-	    end if;
+				Finished_Gate_Open := True;
+			end if;
 
-	    if Aborted then
-		Should_Commit := False;
-	    end if;
-
-	    if Finished'Count = 0 then
-		Finished_Gate_Open := False;
-		Aborted := False;
-	    end if;
+			if Finished'Count = 0 then
+				Finished_Gate_Open := False;
+				Aborted := False;
+			end if;
             ------------------------------------------
         end Finished;
+
+		----------------------------------------	
+		-- Part 2:
+		entry Wait_Until_Aborted when Aborted is
+		begin
+			if Wait_Until_Aborted'Count = 0 then
+				Aborted := False;
+			end if;
+		end Wait_Until_Aborted;
+		----------------------------------------
 
         procedure Signal_Abort is
         begin
             Aborted := True;
         end Signal_Abort;
-
-        function Commit return Boolean is
-        begin
-            return Should_Commit;
-        end Commit;
         
     end Transaction_Manager;
 
@@ -59,10 +58,10 @@ procedure exercise7 is
         -- PART 1: Create the transaction work here
 
         if Random(Gen) > Error_Rate then
-            delay Duration(Random(Gen)*4,0);
+            delay Duration(Random(Gen)*4.0);
             return x + 10;            
         else
-            delay Duration(Random(Gen)*0,5);
+            delay Duration(Random(Gen)*0.5);
             raise Count_Failed;
         end if;
 
@@ -85,33 +84,40 @@ procedure exercise7 is
             Round_Num := Round_Num + 1;
 
             ---------------------------------------
-            -- PART 2: Do the transaction work here  
-
-            begin
-                Unreliable_Slow_Add(5);
-            exception
-                when Count_Failed =>
-                    begin
-                        Manager.Signal_Abort;
-                    end;
-            end;
-
-	    Manager.Finished;
+            -- PART 1: Select-Then-Abort  
+			select
+				Manager.Wait_Until_Aborted;
+				Num := Prev + 5;
+				Put_Line ("  Worker" & Integer'Image(Initial) &
+                            " forward recovery: " & Integer'Image(Prev) &
+                           " to " & Integer'Image(Num));
+			then abort	
+			    begin
+			        Num := Unreliable_Slow_Add(Num);
+					Put_Line ("  Worker" & Integer'Image(Initial) & " comitting" & Integer'Image(Num));
+			    exception
+			        when Count_Failed =>
+			            begin
+			                Manager.Signal_Abort;          
+			            end;
+			    end;
+				Manager.Finished;
+			end select;
             ---------------------------------------
             
-            if Manager.Commit = True then
-                Put_Line ("  Worker" & Integer'Image(Initial) & " comitting" & Integer'Image(Num));
-            else
-                Put_Line ("  Worker" & Integer'Image(Initial) &
-                             " reverting from" & Integer'Image(Num) &
-                             " to" & Integer'Image(Prev));
+--            if Manager.Commit = True then
+--                Put_Line ("  Worker" & Integer'Image(Initial) & " comitting" & Integer'Image(Num));
+--            else
+--                Put_Line ("  Worker" & Integer'Image(Initial) &
+--                             " reverting from" & Integer'Image(Num) &
+--                             " to" & Integer'Image(Prev));
                 -------------------------------------------
                 -- PART 2: Roll back to previous value here
 
-		Num := Prev;
 
+			
                 -------------------------------------------
-            end if;
+            --end if;
 
             Prev := Num;
             delay 0.5;
@@ -127,4 +133,4 @@ procedure exercise7 is
 
 begin
     Reset(Gen); -- Seed the random number generator
-end exercise7;
+end exercise8;

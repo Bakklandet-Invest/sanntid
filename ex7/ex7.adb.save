@@ -20,20 +20,8 @@ procedure exercise7 is
         begin
             ------------------------------------------
             -- PART 3: Complete the exit protocol here
+        
 
-            if Finished'Count = N-1 then
-		Finished_Gate_Open := True;
-		Should_Commit := True;
-	    end if;
-
-	    if Aborted then
-		Should_Commit := False;
-	    end if;
-
-	    if Finished'Count = 0 then
-		Finished_Gate_Open := False;
-		Aborted := False;
-	    end if;
             ------------------------------------------
         end Finished;
 
@@ -89,14 +77,15 @@ procedure exercise7 is
 
             begin
                 Unreliable_Slow_Add(5);
+                Manager.Finished;
             exception
                 when Count_Failed =>
                     begin
                         Manager.Signal_Abort;
+                        Manager.Finished;
                     end;
             end;
 
-	    Manager.Finished;
             ---------------------------------------
             
             if Manager.Commit = True then
@@ -108,7 +97,7 @@ procedure exercise7 is
                 -------------------------------------------
                 -- PART 2: Roll back to previous value here
 
-		Num := Prev;
+
 
                 -------------------------------------------
             end if;
