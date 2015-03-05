@@ -20,6 +20,9 @@ procedure exercise7 is
         begin
             ------------------------------------------
             -- PART 3: Complete the exit protocol here
+
+            
+
             ------------------------------------------
         end Finished;
 
@@ -43,6 +46,15 @@ procedure exercise7 is
     begin
         -------------------------------------------
         -- PART 1: Create the transaction work here
+
+        if Random(Gen) > Error_Rate then
+            delay Duration(Random(Gen)*4,0);
+            return x + 10;            
+        else
+            delay Duration(Random(Gen)*0,5);
+            raise Count_Failed;
+        end if;
+
         -------------------------------------------
     end Unreliable_Slow_Add;
 
@@ -62,7 +74,19 @@ procedure exercise7 is
             Round_Num := Round_Num + 1;
 
             ---------------------------------------
-            -- PART 2: Do the transaction work here             
+            -- PART 2: Do the transaction work here  
+
+            begin
+                Unreliable_Slow_Add(5);
+                Manager.Finished;
+            exception
+                when Count_Failed =>
+                    begin
+                        Manager.Signal_Abort;
+                        Manager.Finished;
+                    end;
+            end;
+
             ---------------------------------------
             
             if Manager.Commit = True then
@@ -73,6 +97,9 @@ procedure exercise7 is
                              " to" & Integer'Image(Prev));
                 -------------------------------------------
                 -- PART 2: Roll back to previous value here
+
+
+
                 -------------------------------------------
             end if;
 
