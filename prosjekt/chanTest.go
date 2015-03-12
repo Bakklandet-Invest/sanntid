@@ -5,6 +5,7 @@ import(
 	"fmt"
 	//"time"
 	"bufio"
+	"os"
 )
 
 
@@ -20,10 +21,11 @@ func chanTest() chan string{
 }
 
 func main(){
-	chanReader := bufio.NewReader(os.Stdin)
+		text = "hei"
+	//chanReader := bufio.NewReader(os.Stdin)
 	ch := chanTest()
-	text := make([]byte,1024)
-	chanReader <- ch
-	text, _ := chanReader.ReadString()
+	//chanReader <- ch
+		text = <- ch
+	//text, _ := chanReader.ReadString()
 	fmt.Println(text)
 }
