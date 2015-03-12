@@ -3,7 +3,7 @@ package main
 import(
 	"strings"
 	"fmt"
-	"time"
+	//"time"
 )
 
 
@@ -20,6 +20,7 @@ func chanTest() chan string{
 
 func main(){
 	ch := chanTest()
+	text := "hei"
 	text <- ch
-	fmt.println(text)
+	fmt.Println(text)
 }
