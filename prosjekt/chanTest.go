@@ -1,7 +1,7 @@
 package main
 
 import(
-	"strings"
+	//"strings"
 	"fmt"
 	//"time"
 )
@@ -20,7 +20,7 @@ func chanTest() chan string{
 
 func main(){
 	ch := chanTest()
-	text := make([]byte)
+	text := make([]byte,1024)
 	text <- ch
 	fmt.Println(text)
 }
