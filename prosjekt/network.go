@@ -95,7 +95,7 @@ func findLocalIP() string {
             }
         }
     }
-    return
+    return "0.0.0.0"
 }
 
 func setupSenderUDP() *net.UDPConn {
@@ -109,7 +109,7 @@ func setupSenderUDP() *net.UDPConn {
 	return sock
 }
 
-func SetupListenUDP(){
+func SetupListenUDP() *net.UDPConn {
 	addr, _ := net.ResolveUDPAddr("udp", ":" + recievePort)
 	sock, _ := net.ListenUDP("udp", addr)
 	
@@ -138,7 +138,7 @@ func main() {
 	runtime.GOMAXPROCS(runtime.NumCPU())
 	
 
-	go broadcastIP()
+	go broadcastLocalIP()
 	go listenForIP()
 	/*
 	Conn := connect(targIP, readPort)
@@ -155,7 +155,7 @@ func main() {
 	
 	<- ch
 
-	Conn.Close()
+	//Conn.Close()
 	
 }
 
