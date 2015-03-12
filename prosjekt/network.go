@@ -44,6 +44,7 @@ func listenForIP(){
 	return
 }
 
+
 func connect(targetIP string, targetPort string) *net.TCPConn {
 	TCPAddr, _ := net.ResolveTCPAddr("tcp", targetIP + ":" + targetPort)	
 	conn, err := net.DialTCP("tcp", nil, TCPAddr)
