@@ -19,6 +19,26 @@ const recievePort = "30000"
 const fixSizePort = "34933"
 const readPort = "33546"
 
+
+func broadcastIP(){
+	bcConn := setupSenderUDP()
+	melding := findLocalIP()
+	byteMelding := []byte(melding)
+	bcConn.Write(byteMelding)
+	return
+}
+
+func listenForIP(){
+	str := make([]byte, 1024)
+	listenConn := SetupListenUDP()
+	_, senderAddr, _ := listenConn.ReadFromUDP(str[:])
+	fmt.Println("message: ")
+	fmt.Println(string(str))
+	fmt.Println("from addr: ")
+	fmt.Println(senderAddr)
+	return
+}
+
 func connect(targetIP string, targetPort string) *net.TCPConn {
 	TCPAddr, _ := net.ResolveTCPAddr("tcp", targetIP + ":" + targetPort)	
 	conn, err := net.DialTCP("tcp", nil, TCPAddr)
@@ -65,25 +85,20 @@ func read(reader *bufio.Reader){
 	return
 }
 
-/* KANSKJE EN UBRUKELIG FUNC
 
 func findLocalIP() string {
-	addrs, err := net.InterfaceAddrs()
-	//handle err
-	switch v := addr.(type) {
-        case *net.IPAddr:
-            // process IP address
+	addrs, _ := net.InterfaceAddrs()
+	for _, address := range addrs {
+        if ipnet, ok := address.(*net.IPNet); ok && !ipnet.IP.IsLoopback() {
+            if ipnet.IP.To4() != nil {
+                return ipnet.IP.String()
+            }
         }
-	return localIP
-}*/
-
-func broadcastIP(net.*UDPConn){
-
-	return
+    }
+    return
 }
 
-
-func senderUDP() net.*UDPConn {
+func setupSenderUDP() net.*UDPConn {
 	addr, _ := net.ResolveUDPAddr("udp", broadcastIP + ":" + writePort)
 	sock, _ := net.DialUDP("udp", nil, addr)
 	
@@ -95,8 +110,7 @@ func senderUDP() net.*UDPConn {
 	return sock
 }
 
-func listenUDP(){
-	str := make([]byte, 1024)
+func SetupListenUDP(){
 	addr, _ := net.ResolveUDPAddr("udp", ":" + recievePort)
 	sock, _ := net.ListenUDP("udp", addr)
 	
@@ -114,7 +128,7 @@ func listenUDP(){
 		return
 	}
 	*/
-	return
+	return sock
 }
 
 
@@ -124,7 +138,10 @@ func main() {
 
 	runtime.GOMAXPROCS(runtime.NumCPU())
 	
-	
+
+	go broadcastIP()
+	go listenForIP()
+	/*
 	Conn := connect(targIP, readPort)
 	
 	var message string = "Initialized"
@@ -134,7 +151,7 @@ func main() {
 	go read(receiveMsgReader)
 	time.Sleep(1*time.Millisecond)
 	go write(Conn, message, sendMsgReader)
-	
+	*/
 	
 	
 	<- ch
