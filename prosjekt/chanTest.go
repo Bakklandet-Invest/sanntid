@@ -20,7 +20,7 @@ func chanTest() chan string{
 
 func main(){
 	ch := chanTest()
-	text := "hei"
+	text := make([]byte)
 	text <- ch
 	fmt.Println(text)
 }
