@@ -21,7 +21,7 @@ func chanTest() chan string{
 }
 
 func main(){
-		text = "hei"
+	text := "hei"
 	//chanReader := bufio.NewReader(os.Stdin)
 	ch := chanTest()
 	//chanReader <- ch
