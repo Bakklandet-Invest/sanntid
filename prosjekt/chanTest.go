@@ -4,6 +4,7 @@ import(
 	//"strings"
 	"fmt"
 	//"time"
+	"bufio"
 )
 
 
@@ -19,8 +20,10 @@ func chanTest() chan string{
 }
 
 func main(){
+	chanReader := bufio.NewReader(os.Stdin)
 	ch := chanTest()
 	text := make([]byte,1024)
-	text <- ch
+	chanReader <- ch
+	text, _ := chanReader.ReadString()
 	fmt.Println(text)
 }
