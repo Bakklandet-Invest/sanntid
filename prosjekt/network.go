@@ -143,7 +143,7 @@ func main() {
 
 	go listenForIP()
 	
-	time.Sleep(1*time.Seconds)
+	time.Sleep(1*time.Second)
 	broadcastLocalIP()
 	
 	/*
