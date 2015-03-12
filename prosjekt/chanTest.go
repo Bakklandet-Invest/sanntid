@@ -1,7 +1,7 @@
 package main
 
 import(
-	"stings"
+	"strings"
 	"fmt"
 	"time"
 )
