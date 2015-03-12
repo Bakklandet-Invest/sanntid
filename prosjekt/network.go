@@ -31,7 +31,6 @@ func broadcastLocalIP(){
 func listenForIP(){
 	str := make([]byte, 1024)
 	listenConn := SetupListenUDP()
-	for {
 		time.Sleep(200*time.Millisecond)
 		_, senderAddr, err := listenConn.ReadFromUDP(str[:])
 		if err != nil {
@@ -41,7 +40,7 @@ func listenForIP(){
 		fmt.Println(string(str))
 		fmt.Println("from addr: ")
 		fmt.Println(senderAddr)
-	}
+	
 	return
 }
 
