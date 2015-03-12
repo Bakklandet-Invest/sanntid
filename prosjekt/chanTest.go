@@ -7,12 +7,12 @@ import(
 )
 
 
-func testFunc(ch chan){
+func testFunc(ch chan string){
 	ch <- "fuck"
 	return
 }
 
-func chanTest() chan {
+func chanTest() chan string{
 	ch := make(chan string)
 	testFunc(ch)
 	return ch
