@@ -33,7 +33,10 @@ func listenForIP(){
 	listenConn := SetupListenUDP()
 	for {
 		time.Sleep(2*time.Second)
-		_, senderAddr, _ := listenConn.ReadFromUDP(str[:])
+		_, senderAddr, err := listenConn.ReadFromUDP(str[:])
+		if err != nil {
+			fmt.Println("ReadFromUDP error")
+		}
 		fmt.Println("message: ")
 		fmt.Println(string(str))
 		fmt.Println("from addr: ")
