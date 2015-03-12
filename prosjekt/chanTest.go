@@ -16,7 +16,7 @@ func testFunc(ch chan string){
 
 func chanTest() chan string{
 	ch := make(chan string)
-	testFunc(ch)
+	go testFunc(ch)
 	return ch
 }
 
