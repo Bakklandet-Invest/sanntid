@@ -98,7 +98,7 @@ func findLocalIP() string {
     return
 }
 
-func setupSenderUDP() net.*UDPConn {
+func setupSenderUDP() net.UDPConn {
 	addr, _ := net.ResolveUDPAddr("udp", broadcastIP + ":" + writePort)
 	sock, _ := net.DialUDP("udp", nil, addr)
 	/*
