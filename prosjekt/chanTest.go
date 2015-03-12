@@ -34,7 +34,7 @@ func findLocalIP() string {
             }
         }
     }
-    return
+    return "0.0.0.0"
 }
 
 func main(){
