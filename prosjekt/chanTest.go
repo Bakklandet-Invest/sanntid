@@ -25,6 +25,18 @@ func chanTest() chan string{
 	return ch
 }
 
+func findLocalIP() string {
+	addrs, _ := net.InterfaceAddrs()
+	for _, address := range addrs {
+        if ipnet, ok := address.(*net.IPNet); ok && !ipnet.IP.IsLoopback() {
+            if ipnet.IP.To4() != nil {
+                return ipnet.IP.String()
+            }
+        }
+    }
+
+}
+
 func main(){
 	runtime.GOMAXPROCS(runtime.NumCPU())
 	text := "hei"
@@ -35,13 +47,5 @@ func main(){
 	//text, _ := chanReader.ReadString()
 	fmt.Println(text)
 
-	addrs, _ := net.InterfaceAddrs()
-	for _, address := range addrs {
-        // check the address type and if it is not a loopback the display it
-        if ipnet, ok := address.(*net.IPNet); ok && !ipnet.IP.IsLoopback() {
-            if ipnet.IP.To4() != nil {
-                fmt.Println(ipnet.IP.String())
-            }
-        }
-    }
+	
 }
