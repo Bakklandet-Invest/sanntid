@@ -35,7 +35,7 @@ func main(){
 	//text, _ := chanReader.ReadString()
 	fmt.Println(text)
 
-	addrs, err := net.InterfaceAddrs()
+	addrs, _ := net.InterfaceAddrs()
 	for _, address := range addrs {
         // check the address type and if it is not a loopback the display it
         if ipnet, ok := address.(*net.IPNet); ok && !ipnet.IP.IsLoopback() {
