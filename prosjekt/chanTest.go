@@ -6,6 +6,7 @@ import(
 	//"time"
 	//"bufio"
 	//"os"
+	"runtime"
 )
 
 
@@ -13,6 +14,7 @@ import(
 
 func testFunc(ch chan string){
 	ch <- "fuck"
+	time.Sleep(10*time.Second)
 	return
 }
 
@@ -23,6 +25,7 @@ func chanTest() chan string{
 }
 
 func main(){
+	runtime.GOMAXPROCS(runtime.NumCPU())
 	text := "hei"
 	//chanReader := bufio.NewReader(os.Stdin)
 	ch := chanTest()
@@ -30,4 +33,12 @@ func main(){
 		text = <- ch
 	//text, _ := chanReader.ReadString()
 	fmt.Println(text)
+
+	host, _ := os.Hostname()
+	addrs, _ := net.LookupIP(host)
+	for _, addr := range addrs {
+    	if ipv4 := addr.To4(); ipv4 != nil {
+        	fmt.Println("IPv4: ", ipv4)
+    }   
+}
 }
