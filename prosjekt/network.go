@@ -141,8 +141,11 @@ func main() {
 	runtime.GOMAXPROCS(runtime.NumCPU())
 	
 
-	go broadcastLocalIP()
 	go listenForIP()
+	
+	time.Sleep(1*time.Seconds)
+	broadcastLocalIP()
+	
 	/*
 	Conn := connect(targIP, readPort)
 	
