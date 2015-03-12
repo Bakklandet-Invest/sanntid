@@ -29,13 +29,16 @@ func broadcastLocalIP(){
 }
 
 func listenForIP(){
-	str := make([]byte, 1024)
-	listenConn := SetupListenUDP()
-	_, senderAddr, _ := listenConn.ReadFromUDP(str[:])
-	fmt.Println("message: ")
-	fmt.Println(string(str))
-	fmt.Println("from addr: ")
-	fmt.Println(senderAddr)
+	for {
+		str := make([]byte, 1024)
+		listenConn := SetupListenUDP()
+		_, senderAddr, _ := listenConn.ReadFromUDP(str[:])
+		fmt.Println("message: ")
+		fmt.Println(string(str))
+		fmt.Println("from addr: ")
+		fmt.Println(senderAddr)
+		
+	}
 	return
 }
 
