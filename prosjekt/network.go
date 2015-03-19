@@ -14,25 +14,42 @@ const selfIP = "129.241.187.144"
 const targIP = "129.241.187.136"
 const broadcastIP = "129.241.187.255"
 
-const writePort = "20013"
+const writePort = "20006"
 const recievePort = "30000"
 const fixSizePort = "34933"
 const readPort = "33546"
 
 
 func broadcastLocalIP(){
-	bcConn := setupSenderUDP()
-	melding := findLocalIP()
-	byteMelding := []byte(melding)
-	bcConn.Write(byteMelding)
+
+	for {
+		bcConn := setupSenderUDP()
+		melding := findLocalIP()
+
+		fmt.Println("ip funnet:" + melding)
+
+		byteMelding := []byte(melding)
+		bcConn.Write(byteMelding)
+
+		fmt.Println("melding sendt")
+		time.Sleep(100*time.Millisecond)
+		}
 	return
 }
 
 func listenForIP(){
 	str := make([]byte, 1024)
 	listenConn := SetupListenUDP()
+	
+	fmt.Println("satt opp lyttesocket")
+
+	for {
+		fmt.Println("starten av lytteløkke")
 		time.Sleep(200*time.Millisecond)
 		_, senderAddr, err := listenConn.ReadFromUDP(str[:])
+
+		fmt.Println("mottatt melding")	
+
 		if err != nil {
 			fmt.Println("ReadFromUDP error")
 		}
@@ -40,7 +57,7 @@ func listenForIP(){
 		fmt.Println(string(str))
 		fmt.Println("from addr: ")
 		fmt.Println(senderAddr)
-	
+	}
 	return
 }
 
@@ -55,6 +72,12 @@ func connect(targetIP string, targetPort string) *net.TCPConn {
        	return conn
     }
 	return conn
+}
+
+func acceptTCPConn() *net.TCPConn {
+	listener = net.ListenTCP("tcp", 0)
+	incConn = net.AcceptTCP(listener)
+	return incConn
 }
 
 /*
@@ -116,7 +139,7 @@ func setupSenderUDP() *net.UDPConn {
 }
 
 func SetupListenUDP() *net.UDPConn {
-	addr, _ := net.ResolveUDPAddr("udp", ":" + recievePort)
+	addr, _ := net.ResolveUDPAddr("udp", ":" + writePort)
 	sock, _ := net.ListenUDP("udp", addr)
 	
 	/*
@@ -138,17 +161,19 @@ func SetupListenUDP() *net.UDPConn {
 
 
 func main() {
-
+	fmt.Println("starter main")
 	ch := make(chan string)
-
+	
 	runtime.GOMAXPROCS(runtime.NumCPU())
 	
 
 	go listenForIP()
+	fmt.Println("startet listen")
 	
-	time.Sleep(3*time.Second)
 	broadcastLocalIP()
-	
+
+	fmt.Println("ferdig med broadcast")
+
 	/*
 	Conn := connect(targIP, readPort)
 	
