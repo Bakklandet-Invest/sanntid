@@ -2,7 +2,7 @@ package main
 
 import (
     ."fmt"
-    "github.com/Bakklandet-Invest/sanntid/blob/master/prosjekt/driverGO/elev.go"
+    "https://github.com/Bakklandet-Invest/sanntid/blob/master/prosjekt/driverGO/elev.go"
 )
 
 func main() {
