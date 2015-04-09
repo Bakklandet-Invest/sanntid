@@ -1,7 +1,6 @@
 #include "elev.h"
 #include <stdio.h>
 
-
 int main() {
     // Initialize hardware
     if (!elev_init()) {
