@@ -4,6 +4,10 @@ import (
     ."fmt"
 )
 
+const DIRN_UP = 1
+const DIRN_DOWN = -1
+
+
 func main() {
     // Initialize hardware
     if (!Elev_init()) {
@@ -13,7 +17,7 @@ func main() {
 
     println("Press STOP button to stop elevator and exit program.\n");
 
-    Elev_set_motor_direction(DIRN_UP);
+    Elev_set_speed(DIRN_UP);
 
     for {
         // Change direction when we reach top/bottom floor
