@@ -13,7 +13,7 @@
 //		// do something with e.Value
 //	}
 //
-package util
+package llist
 
 // Element is an element of a linked list.
 type Element struct {

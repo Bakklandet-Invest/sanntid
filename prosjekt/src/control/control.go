@@ -6,7 +6,7 @@ import (
 	)
 
 type Control struct {
-	elevators map[string]*network.Elevator
+	elevators map[int]*network.Elevator
 	orders map[int][2]bool
 	connected map[string]bool
 }

@@ -4,18 +4,9 @@ import (
 	."net"
 	//"time"
 	"encoding/json"
-	"util"
 	
 )
 
-type Elevator struct {
-	id string
-	stopList util.LinkedList
-	//speed int
-	direction int
-	currentFloor int
-	out chan string
-}
 
 type Message struct{
 	elev Elevator
@@ -45,8 +36,6 @@ func listenUDP() {
 		
 		// send msg videre
 	} 
-
-
 }
 	
 	
@@ -71,5 +60,6 @@ func sendUDP(msg Message) {
     	panic(err)
 	}
 }
+
 
 
