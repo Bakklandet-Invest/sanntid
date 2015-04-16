@@ -5,7 +5,7 @@ package driver  // where "driver" is the folder that contains io.go, io.c, io.h,
 */
 import "C"
 
-func IoInit() bool {
+func Io_init() bool {
 	return bool(int(C.io_init()) != 1)
 }
 

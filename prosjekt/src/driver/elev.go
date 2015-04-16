@@ -101,17 +101,17 @@ func Elev_set_floor_indicator(floor int) {
 	// Need error handling before proceeding
 	switch floor {
 	case 0:
-		Io_clear_bit(BUTTON_IND1)
-		Io_clear_bit(BUTTON_IND2)
+		Io_clear_bit(LIGHT_FLOOR_IND1)
+		Io_clear_bit(LIGHT_FLOOR_IND2)
 	case 1:
-		Io_clear_bit(BUTTON_IND1)
-		Io_set_bit(BUTTON_IND2)
+		Io_clear_bit(LIGHT_FLOOR_IND1)
+		Io_set_bit(LIGHT_FLOOR_IND2)
 	case 2:
-		Io_set_bit(BUTTON_IND1)
-		Io_clear_bit(BUTTON_IND2)
+		Io_set_bit(LIGHT_FLOOR_IND1)
+		Io_clear_bit(LIGHT_FLOOR_IND2)
 	case 3:
-		Io_set_bit(BUTTON_IND1)
-		Io_set_bit(BUTTON_IND2)
+		Io_set_bit(LIGHT_FLOOR_IND1)
+		Io_set_bit(LIGHT_FLOOR_IND2)
 	}
 }
 
