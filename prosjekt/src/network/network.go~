@@ -1,0 +1,27 @@
+package network
+
+import (
+	//"net"
+	//"time"
+	//"encoding/json"
+	"util"
+	
+)
+
+type Elevator struct {
+	stopList *util.LinkedList
+	speed int
+	direction int
+	currentFloor int
+	out chan string
+}
+
+type Message struct{
+	elev *Elevator
+	takenOrder bool
+	floorOrder int
+}
+
+
+
+//func 
