@@ -4,12 +4,11 @@ import (
 	."net"
 	//"time"
 	"encoding/json"
-	
 )
 
 
 type Message struct{
-	elev Elevator
+	//elev Elevator
 	takenOrder bool
 	floorOrder int
 }
@@ -33,7 +32,7 @@ func listenUDP() {
     		panic(err)
 		}	
 		json.Unmarshal(buf[:length], &msg)
-		
+		var _ = senderAddr
 		// send msg videre
 	} 
 }
@@ -50,12 +49,12 @@ func sendUDP(msg Message) {
     	panic(err)
 	}	
 
-	buf, err := json.Mashal(msg)
+	buf, err := json.Marshal(msg)
 	if err != nil {
     	panic(err)
 	}
-	
-	_, err = sock.Write(byteMelding)
+
+	_, err = sock.Write(buf)
 	if err != nil {
     	panic(err)
 	}

@@ -1,16 +1,17 @@
 package control
 
 import (
-	"llist"
+	//"llist"
 	"strconv"
 	"net"
 	."driver"
+	."fmt"
 	)
 
 
 type Elevator struct {
 	id int
-	stopList util.LinkedList
+	//stopList llist.LinkedList
 	direction int
 	currentFloor int
 	update chan Elevator
@@ -42,15 +43,15 @@ func InitElevator() *Elevator {
 	
 	e := new(Elevator)
 	e.id = findElevID()
-	e.stopList = llist.New()
+	//e.stopList = llist.New()
 	e.update = make(chan Elevator, 1)
 	e.order = make(chan int, 1)
 	
-	if Elev_get_floor_signal() == -1 {
+	if Elev_get_floor_sensor_signal() == -1 {
 		Elev_set_speed(-300)
 		for Elev_get_floor_sensor_signal() == -1 {}
 	}
 	Elev_set_speed(0)
 	e.currentFloor = Elev_get_floor_sensor_signal()
-	
+	return e
 }
