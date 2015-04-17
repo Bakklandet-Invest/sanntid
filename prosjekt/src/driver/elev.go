@@ -2,6 +2,7 @@ package driver
 
 import (
 	"math"
+	"time"
 )
 
 
@@ -16,7 +17,7 @@ const (
 	)
 
 
-type buttonSignal struct {
+type ButtonSignal struct {
 	Button int
 	Floor int
 	Light int
@@ -43,12 +44,12 @@ func Elev_init() int {
 
 	for i := 0; i < N_FLOORS; i++ {
 		if i != 0 {
-			Elev_set_button_lamp(buttonSignal{i, BUTTON_CALL_DOWN, 0})
+			Elev_set_button_lamp(ButtonSignal{i, BUTTON_CALL_DOWN, 0})
 		}
 		if i != N_FLOORS-1 {
-			Elev_set_button_lamp(buttonSignal{i, BUTTON_CALL_UP, 0})
+			Elev_set_button_lamp(ButtonSignal{i, BUTTON_CALL_UP, 0})
 		}
-		Elev_set_button_lamp(buttonSignal{i, BUTTON_COMMAND, 0})
+		Elev_set_button_lamp(ButtonSignal{i, BUTTON_COMMAND, 0})
 	}
 
 	Elev_set_stop_lamp(0)
@@ -95,9 +96,44 @@ func Elev_get_button_signal(button int, floor int) int {
 		return 0
 	}
 }
+/*
+func (sig *ButtonSignal) ClearPrevButtonSig() {
+	time.Sleep(time.Second)
+	sig.Floor = -2
+}
+*/
+func Elev_get_order(orderChan chan ButtonSignal) {
+	var buttonSig ButtonSignal
 
-func Elev_get_order(orderChan chan buttonSignal) {
-	var buttonSig ButtonSignal 
+	/* var prevButtonSig ButtonSignal 
+	prevButtonSig.Floor = -2 */ // for å unngå at samme ordere sendes mange ganger på kort tid
+
+	for{
+
+		for i := 0; i < 3; i++ {
+			if (Elev_get_button_signal(BUTTON_CALL_UP, i) == 1) {
+				buttonPressed.Floor =  i
+				buttonPressed.Button = BUTTON_CALL_UP
+				orderChan <- buttonPressed
+			} 
+			else if (Elev_get_button_signal(BUTTON_CALL_DOWN, i+1) == 1) {
+				buttonPressed.Floor =  i+1
+				buttonPressed.Button = BUTTON_CALL_DOWN
+				orderChan <- buttonPressed
+			} 
+		}
+
+		for i := 0; i < 4; i++ {
+        
+			if ( elev_get_button_signal( BUTTON_COMMAND, i ) == 1 ) {
+				buttonPressed.Floor =  i
+				buttonPressed.Button = BUTTON_COMMAND
+				orderChan <- buttonPressed
+			}
+		}
+	
+	//go prevButtonSig.ClearPrevButtonSig()
+	}
 	
 }
 

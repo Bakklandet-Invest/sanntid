@@ -61,7 +61,10 @@ func InitElevator() *Elevator {
 }
 
 
+func (elev *Elevator) OrderHandler() {
+	
 
+}
 
 func (elev *Elevator) Run() {
 	// go funksjonen som skriver til nextDestinationChan
@@ -73,7 +76,7 @@ func (elev *Elevator) Run() {
 		select{
 			case elev.destination = <-nextDestinationChan: // lag funksjon som skriver neste
 				if elev.destination == currentFloor {
-					e.direction =
+					elev.direction = 0
 				}
 
 
