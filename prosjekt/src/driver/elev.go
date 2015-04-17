@@ -4,16 +4,23 @@ import (
 	"math"
 )
 
-const N_FLOORS = 4
-const N_BUTTONS = 3
 
-type Elev_button_type_t int
 
 const (
-	BUTTON_CALL_UP Elev_button_type_t = iota
-	BUTTON_CALL_DOWN
-	BUTTON_COMMAND
-)
+	BUTTON_CALL_UP int = 1
+	BUTTON_CALL_DOWN int = 2
+	BUTTON_COMMAND int = 3
+
+	N_BUTTONS int = 3
+	N_FLOORS int = 4
+	)
+
+
+type buttonSignal struct {
+	Button int
+	Floor int
+	Light int
+}
 
 var lamp_channel_matrix = [N_FLOORS][N_BUTTONS]int{
 	{LIGHT_UP1, LIGHT_DOWN1, LIGHT_COMMAND1},
@@ -36,12 +43,12 @@ func Elev_init() int {
 
 	for i := 0; i < N_FLOORS; i++ {
 		if i != 0 {
-			Elev_set_button_lamp(BUTTON_CALL_DOWN, i, 0)
+			Elev_set_button_lamp(buttonSignal{i, BUTTON_CALL_DOWN, 0})
 		}
 		if i != N_FLOORS-1 {
-			Elev_set_button_lamp(BUTTON_CALL_UP, i, 0)
+			Elev_set_button_lamp(buttonSignal{i, BUTTON_CALL_UP, 0})
 		}
-		Elev_set_button_lamp(BUTTON_COMMAND, i, 0)
+		Elev_set_button_lamp(buttonSignal{i, BUTTON_COMMAND, 0})
 	}
 
 	Elev_set_stop_lamp(0)
@@ -80,7 +87,7 @@ func Elev_get_floor_sensor_signal() int {
 	}
 }
 
-func Elev_get_button_signal(button Elev_button_type_t, floor int) int {
+func Elev_get_button_signal(button int, floor int) int {
 	// Need error handling before proceeding
 	if Io_read_bit(button_channel_matrix[floor][int(button)]) {
 		return 1
@@ -88,6 +95,12 @@ func Elev_get_button_signal(button Elev_button_type_t, floor int) int {
 		return 0
 	}
 }
+
+func Elev_get_order(orderChan chan buttonSignal) {
+	var buttonSig ButtonSignal 
+	
+}
+
 
 func Elev_get_stop_signal() bool {
 	return Io_read_bit(STOP)
@@ -115,7 +128,7 @@ func Elev_set_floor_indicator(floor int) {
 	}
 }
 
-func Elev_set_button_lamp(button Elev_button_type_t, floor int, value int) {
+func Elev_set_button_lamp(order buttonSignal) {
 	// Need error handling before proceeding
 	if value == 1 {
 		Io_set_bit(lamp_channel_matrix[floor][int(button)])
@@ -139,3 +152,4 @@ func Elev_set_door_open_lamp(value int) {
 		Io_clear_bit(LIGHT_DOOR_OPEN)
 	}
 }
+

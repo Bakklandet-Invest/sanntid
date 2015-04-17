@@ -14,11 +14,15 @@ type Elevator struct {
 	//stopList llist.LinkedList
 	direction int
 	currentFloor int
-	update chan Elevator
-	order chan int
+	destination int
+
+	updateChan chan Elevator
+	internalOrderChan chan int
+	externalOrderChan chan int
+	nextDestinationChan chan int
 }
 
-func findElevID() int {
+func FindElevID() int {
 	addrs, _ := net.InterfaceAddrs()
 	for _, address := range addrs {
         if ipnet, ok := address.(*net.IPNet); ok && !ipnet.IP.IsLoopback() {
@@ -55,3 +59,24 @@ func InitElevator() *Elevator {
 	e.currentFloor = Elev_get_floor_sensor_signal()
 	return e
 }
+
+
+
+
+func (elev *Elevator) Run() {
+	// go funksjonen som skriver til nextDestinationChan
+	// go funksjonen som oppdaterer elevator variablene
+	for{
+		/* if Elev_get_obstruction_signal():
+				handle obstruction */
+		//else:
+		select{
+			case elev.destination = <-nextDestinationChan: // lag funksjon som skriver neste
+				if elev.destination == currentFloor {
+					e.direction =
+				}
+
+
+		}	//select	
+	}	//for
+}	//func
