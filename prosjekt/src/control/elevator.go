@@ -17,8 +17,8 @@ type Elevator struct {
 	destination int
 
 	updateChan chan Elevator
-	internalOrderChan chan int
-	externalOrderChan chan int
+	intOrderChan chan int
+	extOrderChan chan int
 	nextDestinationChan chan int
 }
 
@@ -59,12 +59,10 @@ func InitElevator() *Elevator {
 	e.currentFloor = Elev_get_floor_sensor_signal()
 
 
-	updateChan = make(chan Elevator)
-	internalOrderChan = make(chan int)
-	externalOrderChan = make(chan int)
-	nextDestinationChan = make(chan int)
-
-
+	e.updateChan = make(chan Elevator)
+	e.intOrderChan = make(chan ButtonSignal)
+	e.extOrderChan = make(chan ButtonSignal)
+	e.nextDestinationChan = make(chan int)
 
 	go e.OrderHandler
 	go 
@@ -74,8 +72,18 @@ func InitElevator() *Elevator {
 
 
 func (elev *Elevator) OrderHandler() {
+	// external order, send til master
+	// internal order legg til først i stopplisten 
+	// (kun etter orders som er i etasjer over og i riktig retning)
+	var newOrder ButtonSignal
+	for{
+		select{
+			case newOrder = <- elev.extOrderChan:
+				asd
+			case newOrder = <- elev.int
 
-
+		}
+	}
 }
 
 func (elev *Elevator) Run() {
