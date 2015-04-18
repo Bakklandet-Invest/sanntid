@@ -57,12 +57,24 @@ func InitElevator() *Elevator {
 	}
 	Elev_set_speed(0)
 	e.currentFloor = Elev_get_floor_sensor_signal()
+
+
+	updateChan = make(chan Elevator)
+	internalOrderChan = make(chan int)
+	externalOrderChan = make(chan int)
+	nextDestinationChan = make(chan int)
+
+
+
+	go e.OrderHandler
+	go 
+
 	return e
 }
 
 
 func (elev *Elevator) OrderHandler() {
-	
+
 
 }
 
