@@ -1,7 +1,7 @@
 package control
 
 import (
-	//"llist"
+	"llist"
 	"strconv"
 	"net"
 	."driver"
@@ -51,7 +51,7 @@ func InitElevator() *Elevator {
 	
 	e := new(Elevator)
 	e.id = findElevID()
-	//e.stopList = llist.New()
+	e.stopList = llist.New()
 	e.update = make(chan Elevator, 1)
 	e.order = make(chan int, 1)
 	
@@ -61,7 +61,7 @@ func InitElevator() *Elevator {
 	}
 	Elev_set_speed(0)
 	e.currentFloor = Elev_get_floor_sensor_signal()
-
+-
 
 	e.updateChan = make(chan Elevator)
 	e.intOrderChan = make(chan ButtonSignal)
@@ -69,7 +69,7 @@ func InitElevator() *Elevator {
 	e.nextDestinationChan = make(chan int)
 
 	go e.OrderHandler
-	go 
+	go Elev_get_order(intOrderChan, extOrderChan)
 
 	return e
 }
@@ -125,7 +125,7 @@ func (e *Elevator) Run() {
 	}	//for
 }	//func
 
-// fiks så den bruker chanal
+// fiks så den bruker chanal og funker for vårt oppsett
 func (e *Elevator) GetNextDestination() int {
 	// skal returnere neste ordre/destinasjon heisen skal til
 	if e.stopList.Front() != nil {
@@ -134,3 +134,30 @@ func (e *Elevator) GetNextDestination() int {
 		return -1
 	}
 }
+
+func (e *Elevator) addOrder() {
+	var incomingOrder ButtonSignal
+	
+	// få inn ordre fra melding eller fra intOrder og lagre den i incomingOrder
+
+	/* hvis listen er tom, legg til først.
+	 hvis det ligger det noe i listen:
+	 		- sjekk hvilken retning 
+	 			(knapptype/nåværende etasje vs ordre etasje)
+			- sjekk etasje
+	*/
+	if e.stopList.Front() != nil
+		e.stoplist.PushFront(incomingOrder)
+
+}
+/* list funksjoner:
+func (l *LinkedList) InsertBefore(v interface{}, mark *Element) *Element {
+func (l *LinkedList) PushFront(v interface{}) *Element {
+func (l *LinkedList) Remove(e *Element) interface{} {
+func (l *LinkedList) PushBack(v interface{}) *Element {
+
+Button struct:
+	Button int
+	Floor int
+	Light int
+*/
