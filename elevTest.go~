@@ -18,7 +18,6 @@ func main() {
 	for Elev_get_floor_sensor_signal() != 3 {
 		if Elev_get_floor_sensor_signal() != -1 {
 			Println(Elev_get_floor_sensor_signal())
-			Sleep(Second)
 		}
 	}
 	Println(Elev_get_floor_sensor_signal())	
