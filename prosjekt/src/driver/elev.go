@@ -2,7 +2,7 @@ package driver
 
 import (
 	"math"
-	"time"
+	//"time"
 )
 
 
@@ -102,44 +102,37 @@ func (sig *ButtonSignal) ClearPrevButtonSig() {
 	sig.Floor = -2
 }
 */
+
 func Elev_get_order(intOrderChan chan ButtonSignal, extOrderChan chan ButtonSignal) {
 	var buttonSig ButtonSignal
 
-	/* var prevButtonSig ButtonSignal 
-	prevButtonSig.Floor = -2 */ // for å unngå at samme ordere sendes mange ganger på kort tid
+	//var prevButtonSig ButtonSignal 
+	//prevButtonSig.Floor = -2  // for å unngå at samme ordere sendes mange ganger på kort tid
 
 	for{
 
 		for i := 0; i < 3; i++ {
 			if (Elev_get_button_signal(BUTTON_CALL_UP, i) == 1) {
-				buttonPressed.Floor =  i
-				buttonPressed.Button = BUTTON_CALL_UP
-<<<<<<< HEAD
-				orderChan <- buttonPressed
+				buttonSig.Floor =  i
+				buttonSig.Button = BUTTON_CALL_UP
+				extOrderChan <- buttonSig
 			} else if (Elev_get_button_signal(BUTTON_CALL_DOWN, i+1) == 1) {
-=======
-				extOrderChan <- buttonPressed
-			} 
-			else if (Elev_get_button_signal(BUTTON_CALL_DOWN, i+1) == 1) {
->>>>>>> 2f30340a1f9ba2c13afc49c5a69d4f893a51bfd4
-				buttonPressed.Floor =  i+1
-				buttonPressed.Button = BUTTON_CALL_DOWN
-				extOrderChan <- buttonPressed
+				buttonSig.Floor =  i+1
+				buttonSig.Button = BUTTON_CALL_DOWN
+				extOrderChan <- buttonSig
 			} 
 		}
 
 		for i := 0; i < 4; i++ {
         
-			if ( elev_get_button_signal( BUTTON_COMMAND, i ) == 1 ) {
-				buttonPressed.Floor =  i
-				buttonPressed.Button = BUTTON_COMMAND
-				intOrderChan <- buttonPressed
+			if ( Elev_get_button_signal( BUTTON_COMMAND, i ) == 1 ) {
+				buttonSig.Floor =  i
+				buttonSig.Button = BUTTON_COMMAND
+				intOrderChan <- buttonSig
 			}
 		}
-	
 	//go prevButtonSig.ClearPrevButtonSig()
 	}
-	
 }
 
 
@@ -169,12 +162,12 @@ func Elev_set_floor_indicator(floor int) {
 	}
 }
 
-func Elev_set_button_lamp(order buttonSignal) {
+func Elev_set_button_lamp(order ButtonSignal) {
 	// Need error handling before proceeding
-	if value == 1 {
-		Io_set_bit(lamp_channel_matrix[floor][int(button)])
+	if order.Light == 1 {
+		Io_set_bit(lamp_channel_matrix[order.Floor][int(order.Button)])
 	} else {
-		Io_clear_bit(lamp_channel_matrix[floor][int(button)])
+		Io_clear_bit(lamp_channel_matrix[order.Floor][int(order.Button)])
 	}
 }
 
