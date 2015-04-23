@@ -146,8 +146,120 @@ func (e *Elevator) addOrder() {
 	 			(knapptype/nåværende etasje vs ordre etasje)
 			- sjekk etasje
 	*/
-	if e.stopList.Front() != nil
-		e.stoplist.PushFront(incomingOrder)
+
+	if e.stopList.Front() != nil { // hvis listen er tom
+		e.stoplist.PushFront(incomingOrder) 
+	} else {
+		nextElem := e.stopList.Front()
+		root := nextElem.Prev()
+		
+			if (incomingOrder.Floor == Elev_get_floor_sensor_signal() && e.orderInCurrentDir(incomingOrder.button)){ // ordre i etasjen heisen står
+				//få heisen til å ta orderen med en gang
+			}
+			else if (incomingOrder.button == BUTTON_CALL_COMMAND){ // intern ordre - har lagt til funksjonen til en ekstern ordre med bestemt retning. fiks
+				if(e.direction > 0){ // heisen er på vei opp
+					if(incomingOrder.Floor > e.currentFloor) { // etasjen ligger over nåværende
+						for incomingOrder.Floor > nextElem.Value.(ButtonSignal).Floor { // går så lenge incOrder er større enn neste i køen
+							if (nextElem.Value.(ButtonSignal).Floor > nextElem.Next().Value.(ButtonSignal).Floor) { // hvis heisen skal snu, legg til før den snur
+								e.stopList.InsertBefore(incomingOrder, nextElem.Next())
+								continue // gå ut av forløkken
+							}
+							nextElem = nextElem.Next() // gå til neste element i forløkken
+						}
+						e.stopList.InsertBefore(incomingOrder, nextElem.Next()) // hvis incOrder < nextElem
+					}
+					else {
+						// hvis inter ordre ligger under heisen når den er på vei opp
+						nextElem = root.Prev() // setter nextElem til det siste elmentet
+						if (nextElem.Value.(ButtonSignal).Floor > nextElem.Prev().Value.(ButtonSignal).Floor) { // hvis heisen skal opp igjen
+							for (nextElem.Value.(ButtonSignal).Floor > nextElem.Prev().Value.(ButtonSignal).Floor) { // så lenge neste er lavere i listen
+								if (incomingOrder.Floor < nextElem.Value.(ButtonSignal).Floor && incomingOrder.Floor > nextElem.Prev().Value.(ButtonSignal).Floor) {
+								// Hvis incOrder ligger mellom de to neste orderene i listen
+								e.stopList.InsertBefore(incomingOrder, nextElem)
+								}
+								nextElem.Prev() // fortsett bakover i listen
+							}
+						}
+						e.stopList.InsertBefore(incomingOrder, nextElem)
+					}
+				}
+				else{ // heisen er på vei ned
+					if(incomingOrder.Floor < e.currentFloor) { // etasjen ligger under nåværende
+						for incomingOrder.Floor < nextElem.Value.(ButtonSignal).Floor { // går så lenge incOrder er mindre enn neste i køen
+							if (nextElem.Value.(ButtonSignal).Floor < nextElem.Next().Value.(ButtonSignal).Floor) { // hvis heisen skal snu, legg til før den snur
+								e.stopList.InsertBefore(incomingOrder, nextElem.Next())
+								continue // gå ut av forløkken
+							}
+							nextElem = nextElem.Next() // gå til neste element i forløkken
+						}
+						e.stopList.InsertBefore(incomingOrder, nextElem) // hvis incOrder < nextElem
+					}
+					else {
+						// hvis intern ordre ligger over heisen når den er på vei ned
+						nextElem = root.Prev() // setter nextElem til det siste elmentet
+						if (nextElem.Value.(ButtonSignal).Floor < nextElem.Prev().Value.(ButtonSignal).Floor) { // hvis heisen skal ned igjen
+							for (nextElem.Value.(ButtonSignal).Floor > nextElem.Prev().Value.(ButtonSignal).Floor) { // så lenge neste i listen er høyere
+								if (incomingOrder.Floor > nextElem.Value.(ButtonSignal).Floor && incomingOrder.Floor < nextElem.Prev().Value.(ButtonSignal).Floor) {
+								// Hvis incOrder ligger mellom de to neste orderene i listen
+								e.stopList.InsertBefore(incomingOrder, nextElem)
+								}
+								nextElem.Prev() // fortsett bakover i listen
+							}
+						}
+						e.stopList.InsertBefore(incomingOrder, nextElem)
+					}	
+				}
+			}
+			else if (incomingOrder.button == BUTTON_CALL_UP) { // external order opp
+				
+				if (e.direction > 0) {
+					//for nextElem != root { // unødvendig?
+					if (incomingOrder.Floor > e.currentFloor) { // incOrder ligger over heisen
+						if (incomingOrder.Floor < nextElem.Value.(ButtonSignal).Floor){ //incOrder ligger mellom current og neste i listen
+							e.stopList.InsertBefore(incomingOrder, nextElem)
+						}
+						else // (incomingOrder.Floor > nextElem.Value.(ButtonSignal).Floor) { //incOrder ligger over current og neste i listen
+							{
+							//nextElem = nextElem.Next
+							for incomingOrder.Floor > nextElem.Value.(ButtonSignal).Floor { // så lenge incOrder er høyere enn neste element
+								if (nextElem.Value.(ButtonSignal).Floor > nextElem.Next().Value.(ButtonSignal).Floor) {
+									// når neste destinasjon ligger på vei nedover igjen
+									e.stopList.InsertBefore(incomingOrder, nextElem.Next())
+									continue
+								}
+								nextElem = nextElem.Next()		
+							}
+						// trengs det å legge til her? vil aldri være lik, hvis alt annet fungerer
+						}
+						//nextElem = nextElem.Next()
+					}
+					else { //incOrder ligger under heisen
+						nextElem = root.Prev() // setter nextElem til det siste elmentet
+						if (nextElem.Value.(ButtonSignal).Floor > nextElem.Prev().Value.(ButtonSignal).Floor) { // hvis heisen skal opp igjen
+							for (nextElem.Value.(ButtonSignal).Floor > nextElem.Prev().Value.(ButtonSignal).Floor) { // så lenge neste er lavere i listen
+								if (incomingOrder.Floor < nextElem.Value.(ButtonSignal).Floor && incomingOrder.Floor > nextElem.Prev().Value.(ButtonSignal).Floor)
+								// Hvis incOrder ligger mellom de to neste orderene i listen
+								e.stopList.InsertBefore(incomingOrder, nextElem)
+								nextElem.Prev() // fortsett bakover i listen
+							}
+						}
+						e.stopList.InsertBefore(incomingOrder, nextElem) // hvis heisen ikke har noen kø oppover igjen etter å ha byttet retning
+					}
+					// } // kommentert for
+				}
+				else { // e.direction < 0
+
+				}
+			}
+			else if (incomingOrder.button == BUTTON_CALL_UP) { // incOrder skal opp
+				if (e.direction > 0){
+
+				}
+			}
+
+			
+ // fiks sluttbrackets
+	}
 
 }
 /* list funksjoner:
@@ -155,9 +267,16 @@ func (l *LinkedList) InsertBefore(v interface{}, mark *Element) *Element {
 func (l *LinkedList) PushFront(v interface{}) *Element {
 func (l *LinkedList) Remove(e *Element) interface{} {
 func (l *LinkedList) PushBack(v interface{}) *Element {
+func (e *Element) Next() *Element {
 
 Button struct:
 	Button int
 	Floor int
 	Light int
 */
+
+
+func (e *Elevator) orderInCurrentDir(buttonType int) bool {
+	if ((buttonType == BUTTON_CALL_UP && e.direction < 0) || (buttonType = BUTTON_CALL_DOWN && e.direction > 0)) {return false}
+	else {return true}
+}
