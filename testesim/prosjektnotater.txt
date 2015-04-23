@@ -1,0 +1,53 @@
+Generelt:
+
+Systemet består av en kontrollenhet og 3 heiser.
+			- ha en standard lengde på beskjeder. I tilfellet ikke hele beskjeden blir sendt samtidig (vet fortsatt ikke hvordan det fungerer)
+
+
+Når en knapp trykkes utenfor heisene vil kontrollenh sende ut etasjen til alle heiser. 
+			- ha en maks ventetid/maks sendinger
+			- ha en kø med like mange plasser som det er etasjer (hold styr på hvilke etasjer som allerede er i køen) 
+	Hver heis finner ut hvordan de ligger i forhold til forespørselen og sender tilbake avstanden sammen med sin ID
+		Kontrollenh finner heisen som er nærmest og sender ut en ny beskjed
+
+
+
+Innhold i:
+	Kontrollenh
+		variabler:
+			- liste med forespørseler som ikke er sendt (kommer det en ny forespørsel fra samme etasje ignoreres denne).
+			- liste med forespørseler som utføres (kommer det en ny forespørsel fra samme etasje ignoreres denne). (vet ikke om det trengs)
+
+		funksjoner:
+			- ta inn forespørseler
+			- broadcaste forespørseler
+			- ta imot svar fra heisene
+			- finne beste heis for forespørsel
+
+	Heiser
+		variabler:
+			- nåværende etasje
+			- destinasjon
+
+		
+		funksjoner:
+			- avstand til forespørsel
+			- la inn forespørseler fra internt panel
+
+		annet:
+			- dele informasjon med de andre heisene
+			- ta imot og lagre informasjon fra de andre heisene
+
+
+pakkesending bruk JSON / MARSHALL
+
+finne måte å holde funksjonen gående mens go routines kjører
+	lag en channel og send til denne når routinen er ferdig
+
+
+start opp med å broadcaste ip
+de andre starter med å lytte
+hvis de som lytter ikke mottar ip vil de broadcaste sin ip
+
+den som sender ut sin ip vil være master
+

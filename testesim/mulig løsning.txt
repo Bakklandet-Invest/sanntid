@@ -1,0 +1,12 @@
+mulig løsning
+
+alle starter med å broadcaste iper (med rand mellomrom?) IPene lagres av hver heis. etter en gitt tid eller når 3 iper er lagret, velges heisen med lavest heisID som master. 
+
+master lager en kontrollstruct som lagrer heisID som er siste 3 siffer i IPen, IPer, IPen til masterheisen, posisjon, retning osv. Alle heiser lagrer denne. 
+
+Master tar i mot oppdateringer fra slavene (posisjon, retning osv) lagrer dette i kontrollstructen og sender den til slavene, som tar backup i tilfelle de eller master disconnecter. 
+
+Hvis master disconnecter tar den gjenværende heisen med lavest ID over. Denne forblir master selv om den opprinnelige masteren reconnecter.
+
+når en ordre kommer inn sendes den til alle heisene. heisene beregner selv om de skal ta orderen. når dette er gjort sender de informasjonen til master som oppdaterer kontrollstructen og sender den tilbake før neste ordre behandles. 
+(finn en måte å gjenkjenne når det er mottatt en kontrollstruct og neste ordre kan behandles (kan bruke når det blir mottatt en melding fra masterIPen. kan bli problem hvis det skal broadcastes at heisene er oppe og går))

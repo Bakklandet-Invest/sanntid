@@ -115,8 +115,7 @@ func Elev_get_order(orderChan chan ButtonSignal) {
 				buttonPressed.Floor =  i
 				buttonPressed.Button = BUTTON_CALL_UP
 				orderChan <- buttonPressed
-			} 
-			else if (Elev_get_button_signal(BUTTON_CALL_DOWN, i+1) == 1) {
+			} else if (Elev_get_button_signal(BUTTON_CALL_DOWN, i+1) == 1) {
 				buttonPressed.Floor =  i+1
 				buttonPressed.Button = BUTTON_CALL_DOWN
 				orderChan <- buttonPressed
