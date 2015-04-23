@@ -50,6 +50,7 @@ func InitElevator() *Elevator {
 	
 	e := new(Elevator)
 	e.id = FindElevID()
+
 	//e.stopList = llist.New()
 	
 	if Elev_get_floor_sensor_signal() == -1 {
@@ -152,30 +153,42 @@ func (e *Elevator) removeOrder(floor int, button int) {
 
 func (e *Elevator) getNewDirection() {
 		// return int eller send på channel ?
-	if e.direction = 0
-		if (e.orderMatrix[e.currentFloor][0] || e.orderMatrix[e.currentFloor][1] || e.orderMatrix[e.currentFloor][2]) {
+	
+	if (e.orderMatrix[e.currentFloor][0] || e.orderMatrix[e.currentFloor][1] || e.orderMatrix[e.currentFloor][2]) {
 			 // return eller send
-		}
-	minDist := N_FLOORS
+	}
+	dist := N_FLOORS
+	next := e.currentFloor
 	for i := 0; i <= 3; i++ {
 		if e.orderMatrix[i][2] {
-			 
+			if math.Abs(e.currentFloor - i) < dist {
+				dist = math.Abs(e.currentFloor - i)
+				next = i
+			}
 		}
 	}	
-
+	if next != e.currentFloor {
+		// return eller send
+	}
 	
-	for i := e.currentFloor; i <= 3; i++ {
-			if orderMatrix[i][0] || orderMatrix[i][2] {
-				return true
-			}
+	for i := 0; i <= 3; i++ { // finn nederste som vil opp
+		if orderMatrix[i][0] {
+			dist = math.Abs(e.currentFloor - i)
+			next = i
 		}	
 	}	
-		for i := e.currentFloor; i >= 0; i-- {
-			if orderMatrix[i][1] || orderMatrix[i][2] {
-				return true
+	for i := 3; i >= 0; i-- { // finn øverste ordre som vil ned
+		if orderMatrix[i][1] {
+			if math.Abs(e.currentFloor - i) < dist {
+				dist = math.Abs(e.currentFloor - i)
+				next = i
 			}
 		}
+	}
+	// return eller send next
 }
+
+
 func (e *Elevator) orderInOtherDir() bool {
 	if e.direction > 0 {
 		for i := 0; i <= 3; i++ {
