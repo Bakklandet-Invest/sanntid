@@ -23,6 +23,8 @@ func PrintUDPMessage(msg  messageUDP){ //Private?
 }
 
 func InitUDP(localListenPort, broadcastPort, messageSize int, sendCh, recieveCh chan messageUDP)(err error){
+	fmt.Println("InitUDP running")
+	
 	// udp/udp4/udp6?
 	broadcastAddr, err = net.ResolveUDPAddr("udp","255.255.255.255:"+strconv.Itoa(broadcastPort))
 	// ? Dette error-opplegget eller panic?
