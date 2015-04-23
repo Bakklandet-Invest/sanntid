@@ -141,20 +141,40 @@ func (e *Elevator) addOrder(intOrderChan chan ButtonSignal, masterOrderChan chan
 				e.orderMatrix[order.Floor][order.Button - 1] = true
 			case order = <- intOrderChan:
 				e.orderMatrix[order.Floor][order.Button - 1] = true
+		}
+	}
 }
 
-func (e *Elevator) removeOrder() {
-
+func (e *Elevator) removeOrder(floor int, button int) {
+	e.orderMatrix[order.Floor][order.Button - 1] = false
 }
 
 
-func (e *Elevator) getNextDestination() {
+func (e *Elevator) getNewDirection() {
 		// return int eller send på channel ?
 	if e.direction = 0
 		if (e.orderMatrix[e.currentFloor][0] || e.orderMatrix[e.currentFloor][1] || e.orderMatrix[e.currentFloor][2]) {
 			 // return eller send
 		}
+	minDist := N_FLOORS
+	for i := 0; i <= 3; i++ {
+		if e.orderMatrix[i][2] {
+			 
+		}
+	}	
+
 	
+	for i := e.currentFloor; i <= 3; i++ {
+			if orderMatrix[i][0] || orderMatrix[i][2] {
+				return true
+			}
+		}	
+	}	
+		for i := e.currentFloor; i >= 0; i-- {
+			if orderMatrix[i][1] || orderMatrix[i][2] {
+				return true
+			}
+		}
 }
 func (e *Elevator) orderInOtherDir() bool {
 	if e.direction > 0 {
@@ -170,6 +190,14 @@ func (e *Elevator) orderInOtherDir() bool {
 			}		
 		}
 	}
+}
+
+func (e *Elevator) orderOnCurrentFloor() bool {	
+	if (e.orderMatrix[Elev_get_floor_sensor_signal()][0] || e.orderMatrix[Elev_get_floor_sensor_signal()][1] || e.orderMatrix[Elev_get_floor_sensor_signal()][2]) {
+		return true
+	}
+	return false
+}
 
 func (e *Elevator) orderInCurrentDir() bool {
 	if e.direction > 0 {

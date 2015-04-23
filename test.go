@@ -1,7 +1,8 @@
 package main
 
 import(
-	"fmt"
+	."fmt"
+	."math"
 	)
 
 
@@ -10,11 +11,13 @@ func main(){
 	type Matrix [4][3]int
 	var matr Matrix
 	matr[1][1] = 5
-	fmt.Println(matr)
+	Println(matr)
 
 	for i := 0; i <= 5; i++ {
-		fmt.Println(i)
+		Println(i)
 	}
+
+	Println(Abs(-1))
 }
 
 
