@@ -2,13 +2,18 @@ package main
 
 import(
 	."fmt"
-	."math"
+	//."math"
 	)
 
+type Matrix [4][3]int
 
+type rompe struct {
+	matrise Matrix
+}
 	
 func main(){
-	type Matrix [4][3]int
+	hei := new(rompe)
+	Println(hei.matrise)
 	var matr Matrix
 	matr[1][1] = 5
 	Println(matr)
@@ -17,7 +22,9 @@ func main(){
 		Println(i)
 	}
 
-	Println(Abs(-1))
+	Println("---------")
+	asd := -matr[1][1]
+	Println(asd)
 }
 
 
