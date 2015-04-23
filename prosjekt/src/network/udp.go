@@ -2,9 +2,9 @@ package network
 
 import (
 	"net"
-	"strings"
+	//"strings"
 	//"time"
-	//"strconv"
+	"strconv"
 	"fmt"
 	//"os"
 )
@@ -24,14 +24,14 @@ func PrintUDPMessage(msg  messageUDP){ //Private?
 
 func InitUDP(localListenPort, broadcastPort, messageSize int, sendCh, recieveCh chan messageUDP)(err error){
 	// udp/udp4/udp6?
-	broadCastAddr, err = net.ResolveUDPAddr("udp",(255.255.255.255:"+strconv.Itoa(broadcastPort))
+	broadcastAddr, err = net.ResolveUDPAddr("udp","255.255.255.255:"+strconv.Itoa(broadcastPort))
 	// ? Dette error-opplegget eller panic?
 	if err != nil{
 		return err
 	}
 	
 	// Find localaddress and sets up with choosen port
-	tempConn, err := net.DialUDP("udp4, nil, broadcastAddr)
+	tempConn, err := net.DialUDP("udp", nil, broadcastAddr)
 	defer tempConn.Close()
 	tempAddr := tempConn.LocalAddr()
 	LocalAddress, err = net.ResolveUDPAddr("udp", tempAddr.String())
@@ -43,7 +43,7 @@ func InitUDP(localListenPort, broadcastPort, messageSize int, sendCh, recieveCh 
 		return err
 	}
 	
-	broadcastListenConn, err := net.ListenUDP("udp", baddr)
+	broadcastListenConn, err := net.ListenUDP("udp", broadcastAddr)
 	if err != nil {
 		localListenConn.Close()
 		return err
@@ -86,7 +86,7 @@ func transmitServerUDP(lConn, bConn *net.UDPConn, sendCh chan messageUDP) {
 		if r := recover(); r != nil {
 			fmt.Println("Error in transmitServerUDP: %s \n Closing connection.", r)
 			lConn.Close()
-			bconn.Close()
+			bConn.Close()
 		}
 	}()
 
@@ -128,7 +128,7 @@ func connectionReaderUDP(conn *net.UDPConn, messageSize int, rCh chan messageUDP
 
 	for {
 		//		fmt.Printf("connectionReaderUDP: Waiting on data from UDPConn\n")
-		n, raddr, err := conn.ReadFromUDP(buffer) // n number of bytes copied to buffer
+		n, recieveAddr, err := conn.ReadFromUDP(buffer) // n number of bytes copied to buffer
 		//		fmt.Printf("connectionReaderUDP: Received %s from %s \n", string(buf), raddr.String())
 		if err != nil || n < 0 {
 			panic(err)

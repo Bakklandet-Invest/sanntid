@@ -17,7 +17,7 @@ func Init(){
 	const broadcastListenPort = 13370
 	const messageSize = 1024
 
-	err := Init(localListenPort, broadcastListenPort, messageSize, sendChan, ReceiveChan)
+	err := InitUDP(localListenPort, broadcastListenPort, messageSize, sendChan, RecieveChan)
 	if err != nil {
 		fmt.Print("InitUDP error: %s \n", err)
 	}
@@ -27,9 +27,9 @@ func Init(){
 }
 
 func aliveNotifier() {
-	alive := Message{Content: Alive, Storey: -1, Button: -1, Cost: -1}
+	alive := Message{Content: Alive, Floor: -1, Button: -1, Cost: -1}
 	for {
-		MessageChan <- alive
+		MessageCh <- alive
 		time.Sleep(NotifyInterval)
 	}
 }
@@ -72,7 +72,7 @@ func PrintMessage(msg Message) {
 	fmt.Println("-----Message end-------\n")
 }
 
-func ParseMessage(msgUDP MessageUDP) Message {
+func ParseMessage(msgUDP messageUDP) Message {
 	fmt.Printf("Before parse: %s from %s\n", string(msgUDP.data), msgUDP.recieveAddr)
 
 	var msg Message
