@@ -102,7 +102,7 @@ func (sig *ButtonSignal) ClearPrevButtonSig() {
 	sig.Floor = -2
 }
 */
-func Elev_get_order(orderChan chan ButtonSignal) {
+func Elev_get_order(intOrderChan chan ButtonSignal, extOrderChan chan ButtonSignal) {
 	var buttonSig ButtonSignal
 
 	/* var prevButtonSig ButtonSignal 
@@ -114,11 +114,17 @@ func Elev_get_order(orderChan chan ButtonSignal) {
 			if (Elev_get_button_signal(BUTTON_CALL_UP, i) == 1) {
 				buttonPressed.Floor =  i
 				buttonPressed.Button = BUTTON_CALL_UP
+<<<<<<< HEAD
 				orderChan <- buttonPressed
 			} else if (Elev_get_button_signal(BUTTON_CALL_DOWN, i+1) == 1) {
+=======
+				extOrderChan <- buttonPressed
+			} 
+			else if (Elev_get_button_signal(BUTTON_CALL_DOWN, i+1) == 1) {
+>>>>>>> 2f30340a1f9ba2c13afc49c5a69d4f893a51bfd4
 				buttonPressed.Floor =  i+1
 				buttonPressed.Button = BUTTON_CALL_DOWN
-				orderChan <- buttonPressed
+				extOrderChan <- buttonPressed
 			} 
 		}
 
@@ -127,7 +133,7 @@ func Elev_get_order(orderChan chan ButtonSignal) {
 			if ( elev_get_button_signal( BUTTON_COMMAND, i ) == 1 ) {
 				buttonPressed.Floor =  i
 				buttonPressed.Button = BUTTON_COMMAND
-				orderChan <- buttonPressed
+				intOrderChan <- buttonPressed
 			}
 		}
 	
