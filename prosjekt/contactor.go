@@ -7,6 +7,7 @@ import(
 )
 
 var liftsOnline = make(map[string]network.ConnectionUDP)
+var disconnElevChan = make(chan network.ConnectionUDP)
 
 func writemap() {
 	for {
@@ -23,6 +24,8 @@ func main(){
 		select{
 		case msg := <-network.RecieveChan:
 			messageHandler(network.ParseMessage(msg))
+		case conn := <- disconnElevChan:
+			deleteLift(conn.Addr)
 		}
 			
 			
@@ -37,6 +40,7 @@ func messageHandler(msg network.Message) {
 			} else{
 				newConn := network.ConnectionUDP{msg.Addr, time.NewTimer(network.ResetConnTime)}
 				liftsOnline[msg.Addr] = newConn
+				go connTimer(newConn)
 			}
 		case network.NewOrder:
 			//kanskje skrive ut noe?
@@ -51,4 +55,15 @@ func messageHandler(msg network.Message) {
 			//Skrive noe
 			//Sende til kostnadskanal?
 		}		
+}
+
+func connTimer(conn network.ConnectionUDP){
+	for{
+	<-conn.Timer.C
+	disconnElevChan <- conn
+	}
+}
+
+func deleteLift(addr string){
+	delete(liftsOnline, addr)
 }
