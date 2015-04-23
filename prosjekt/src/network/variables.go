@@ -30,6 +30,9 @@ type ConnectionUDP struct{
 	Timer *time.Timer
 }
 
+const ResetConnTime = 100*time.Second
+
+
 
 var LocalAddress *net.UDPAddr
 

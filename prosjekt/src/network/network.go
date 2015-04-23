@@ -9,8 +9,7 @@ import (
 var RecieveChan = make(chan messageUDP)
 var sendChan = make(chan messageUDP)
 
-const NotifyInterval = 30*time.Second
-//const ResetTime = 120*time.Second
+const NotifyInterval = 20*time.Second
 
 func Init(){
 	const localListenPort = 13369

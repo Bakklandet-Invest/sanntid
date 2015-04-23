@@ -3,20 +3,20 @@ package main
 import(
 	"network"
 	//"net"
-	"fmt"
-	"time"
+	//"fmt"
+	//"time"
 	)
 	
 func main(){
 	var kanal = make(chan int)
 	
 	network.Init()
-	testmessage := network.Message{Content: network.NewOrder, Floor: 3, Button: 3, Cost: 69}
-	for {
-		fmt.Println(localListenPort)
-		network.MessageCh <- testmessage
-		time.Sleep(5*time.Second)
-	}
+	//testmessage := network.Message{Content: network.NewOrder, Floor: 3, Button: 3, Cost: 69}
+	//for {
+		//fmt.Println(localListenPort)
+		//network.MessageCh <- testmessage
+		//time.Sleep(5*time.Second)
+	//}
 	
 	<-kanal
 }
