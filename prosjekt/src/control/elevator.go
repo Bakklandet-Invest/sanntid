@@ -119,7 +119,7 @@ func (e *Elevator) Run() {
 					Elev_set_stop_lamp(-1)
 					// hva skal skje når stop-knappen trykkes?
 				} 
-				if e.orderOnCurrentFloor() && e.canCompleteOrder() {
+				if e.orderOnCurrentFloor() && e.canCompleteOrder() && e.direction != 0 {
 					Elev_set_speed(0)
 					if e.currentFloor == 3 || e.currentFloor == 0 {
 						e.removeAllOrdersOnFloor(e.currentFloor)
@@ -134,13 +134,13 @@ func (e *Elevator) Run() {
 					if e.orderInCurrentDir() {
 						Println("setter speed")
 						Elev_set_speed(300*e.direction)
-						Sleep(2*Millisecond)
+						Sleep(50*Millisecond) // fjern for å håndtere stop?
 						continue
 					} else if e.orderInOtherDir() {
 						Println("setter speed og endrer retning")
 						Elev_set_speed(300*e.direction)
 						e.direction = -e.direction
-						Sleep(2*Millisecond)
+						Sleep(50*Millisecond) // fjern for å håndtere stop?
 					} else if e.location != -1 {
 						Println("setter direction til null")
 						e.direction = 0
@@ -149,6 +149,8 @@ func (e *Elevator) Run() {
 				if e.direction == 0 {
 					Println("henter ny retning")
 					e.getNewDirection()
+					// Sleep(500*Millisecond) //vurder for å ikke kjøre koden unødvendig ofte. evt lag en kanal som gir beskjed når det kommer ny ordre
+												// burde ikke sove for å kunne håndtere stop (står uansett stille?)
 				}
 
 
@@ -196,43 +198,50 @@ func (e *Elevator) removeOrdersGoingDown(floor int) {
 
 func (e *Elevator) getNewDirection() {
 		// return int eller send på channel ? - skriv til e.direction
-	if (e.orderMatrix[e.currentFloor][0] || e.orderMatrix[e.currentFloor][1] || e.orderMatrix[e.currentFloor][2]) {
-		
-	}
-	dist := N_FLOORS
-	next := e.currentFloor
-	for i := 0; i <= 3; i++ {
-		if e.orderMatrix[i][2] {
-			if int(math.Abs(float64(e.currentFloor - i))) < dist {
-				dist = int(math.Abs(float64(e.currentFloor - i)))
-				next = i
-				Println(next)
-			}
-		}
-	}	
-	if next == e.currentFloor {
-		for i := 0; i <= 3; i++ { // finn nederste som vil opp
-			if e.orderMatrix[i][0] {
-				dist = int(math.Abs(float64(e.currentFloor - i)))
-				next = i
-			}	
-		}	
-		for i := 3; i >= 0; i-- { // finn øverste ordre som vil ned
-			if e.orderMatrix[i][1] {
-				if int(math.Abs(float64(e.currentFloor - i))) < dist {
-					dist = int(math.Abs(float64(e.currentFloor - i)))
-					next = i
-				}
-			}
-		}
-	}
-	if next != e.currentFloor {
-		if next > e.currentFloor {
+	if e.orderMatrix[e.currentFloor][2] {
+		e.removeOrder(e.currentFloor, BUTTON_COMMAND)
+	} else if (e.orderMatrix[e.currentFloor][0] && e.orderMatrix[e.currentFloor][1]) {
+		if e.currentFloor >= N_FLOORS/2 {
 			e.direction = 1
 		} else {
 			e.direction = -1
 		}
-		return
+	} else {
+		dist := N_FLOORS
+		next := e.currentFloor
+		for i := 0; i <= 3; i++ {
+			if e.orderMatrix[i][2] {
+				if int(math.Abs(float64(e.currentFloor - i))) < dist {
+					dist = int(math.Abs(float64(e.currentFloor - i)))
+					next = i
+					Println(next)
+				}
+			}
+		}	
+		if next == e.currentFloor {
+			for i := 0; i <= 3; i++ { // finn nederste som vil opp
+				if e.orderMatrix[i][0] {
+					dist = int(math.Abs(float64(e.currentFloor - i)))
+					next = i
+				}	
+			}	
+			for i := 3; i >= 0; i-- { // finn øverste ordre som vil ned
+				if e.orderMatrix[i][1] {
+					if int(math.Abs(float64(e.currentFloor - i))) < dist {
+						dist = int(math.Abs(float64(e.currentFloor - i)))
+						next = i
+					}
+				}
+			}
+		}
+		if next != e.currentFloor {
+			if next > e.currentFloor {
+				e.direction = 1
+			} else {
+				e.direction = -1
+			}
+			return
+		}
 	}
 	return
 }
@@ -240,7 +249,7 @@ func (e *Elevator) getNewDirection() {
 
 func (e *Elevator) orderInOtherDir() bool {
 	if e.direction > 0 {
-		for i := 0; i <= 3; i++ {
+		for i := 3; i <= 0; i++ {
 			if e.orderMatrix[i][1] {
 				return true
 			}
@@ -249,7 +258,7 @@ func (e *Elevator) orderInOtherDir() bool {
 		for i := 0; i <= 3; i++ {
 			if e.orderMatrix[i][0] {
 				return true
-			}		
+			}		// må sjekke om det er command i motsatt retn av direction?
 		}
 	}
 	return false
@@ -258,8 +267,7 @@ func (e *Elevator) orderInOtherDir() bool {
 func (e *Elevator) orderOnCurrentFloor() bool {	
 	if Elev_get_floor_sensor_signal() == -1 {
 		return false
-	}
-	if (e.orderMatrix[e.currentFloor][0] || e.orderMatrix[e.currentFloor][1] || e.orderMatrix[e.currentFloor][2]) {
+	} else if (e.orderMatrix[e.currentFloor][0] || e.orderMatrix[e.currentFloor][1] || e.orderMatrix[e.currentFloor][2]) {
 		Println("returnerer true")
 		return true
 	}
