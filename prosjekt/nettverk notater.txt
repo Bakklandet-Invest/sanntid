@@ -1,0 +1,8 @@
+
+
+lagrer hvilken id som er master i lifts online
+sjekker ved valgt tidspunkt at man har en master i sitt map
+if not---- oppdaterer med master (lavest ip)
+
+ubestemt: hvordan master/slaver tar avgjørelser
+

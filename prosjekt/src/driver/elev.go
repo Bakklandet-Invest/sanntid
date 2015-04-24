@@ -2,7 +2,8 @@ package driver
 
 import (
 	"math"
-	//"time"
+	."time"
+	."fmt"
 )
 
 
@@ -44,12 +45,12 @@ func Elev_init() int {
 
 	for i := 0; i < N_FLOORS; i++ {
 		if i != 0 {
-			Elev_set_button_lamp(ButtonSignal{i, BUTTON_CALL_DOWN, 0})
+			Elev_set_button_lamp(ButtonSignal{BUTTON_CALL_DOWN, i, 0})
 		}
 		if i != N_FLOORS-1 {
-			Elev_set_button_lamp(ButtonSignal{i, BUTTON_CALL_UP, 0})
+			Elev_set_button_lamp(ButtonSignal{BUTTON_CALL_UP, i, 0})
 		}
-		Elev_set_button_lamp(ButtonSignal{i, BUTTON_COMMAND, 0})
+		Elev_set_button_lamp(ButtonSignal{BUTTON_COMMAND, i, 0})
 	}
 
 	Elev_set_stop_lamp(0)
@@ -71,8 +72,9 @@ func Elev_set_speed(speed int) {
 		Io_set_bit(MOTORDIR)
 	}
 	last_speed = speed
-	Io_write_analog(MOTOR, int(2048+4*math.Abs(float64(speed))))
+ 	Io_write_analog(MOTOR, int(2048+4*math.Abs(float64(speed))))
 }
+
 
 func Elev_get_floor_sensor_signal() int {
 	if Io_read_bit(SENSOR1) {
@@ -104,19 +106,21 @@ func (sig *ButtonSignal) ClearPrevButtonSig() {
 */
 
 func Elev_get_order(intOrderChan chan ButtonSignal, extOrderChan chan ButtonSignal) {
+	Println("getorder")
 	var buttonSig ButtonSignal
 
 	//var prevButtonSig ButtonSignal 
 	//prevButtonSig.Floor = -2  // for å unngå at samme ordere sendes mange ganger på kort tid
 
 	for{
-
 		for i := 0; i < 3; i++ {
-			if (Elev_get_button_signal(BUTTON_CALL_UP, i) == 1) {
+			if (Elev_get_button_signal(BUTTON_CALL_UP-1, i) == 1) {
 				buttonSig.Floor =  i
 				buttonSig.Button = BUTTON_CALL_UP
+				Println("sender ordre opp")
+				Println(buttonSig.Floor)
 				extOrderChan <- buttonSig
-			} else if (Elev_get_button_signal(BUTTON_CALL_DOWN, i+1) == 1) {
+			} else if (Elev_get_button_signal(BUTTON_CALL_DOWN-1, i+1) == 1) {
 				buttonSig.Floor =  i+1
 				buttonSig.Button = BUTTON_CALL_DOWN
 				extOrderChan <- buttonSig
@@ -125,7 +129,7 @@ func Elev_get_order(intOrderChan chan ButtonSignal, extOrderChan chan ButtonSign
 
 		for i := 0; i < 4; i++ {
         
-			if ( Elev_get_button_signal( BUTTON_COMMAND, i ) == 1 ) {
+			if ( Elev_get_button_signal( BUTTON_COMMAND-1, i ) == 1 ) {
 				buttonSig.Floor =  i
 				buttonSig.Button = BUTTON_COMMAND
 				intOrderChan <- buttonSig
@@ -187,3 +191,13 @@ func Elev_set_door_open_lamp(value int) {
 	}
 }
 
+func Elev_stop_elev(dir int) {
+	if dir > 0 {
+		Elev_set_speed(-300)
+		Sleep(5*Millisecond)
+	} else if dir < 0 {
+		Elev_set_speed(300)
+		Sleep(5*Millisecond)
+	} 
+	Elev_set_speed(0)
+}

@@ -19,12 +19,22 @@ func main(){
 	Println(matr)
 
 	for i := 0; i <= 5; i++ {
+		if i == 2 {
+			continue
+		} else {
 		Println(i)
+		}
 	}
 
 	Println("---------")
 	asd := -matr[1][1]
 	Println(asd)
+	dsa := float64(asd)
+	kuk := int(float64(asd) + dsa)
+	Println(matr[1])
+	Printf("KUK %v", kuk)
+	kukbool := false
+	Println(kuk*int(kukbool))
 }
 
 
