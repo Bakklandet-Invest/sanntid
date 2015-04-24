@@ -169,6 +169,7 @@ func (e *Elevator) UpdateStatus() {
 			elev_set_floor_indicator(e.currentFloor)
 			//send reachedfloor
 			
+			
 		}
 		Sleep(Millisecond)
 	}
