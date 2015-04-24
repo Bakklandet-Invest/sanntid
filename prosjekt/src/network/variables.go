@@ -13,8 +13,15 @@ const (
 	Alive int = iota + 1
 	NewOrder
 	CompletedOrder
-	Cost
+	Info
 )
+
+type ElevatorInfo struct{
+	Matrix [NumFloors][NumButtons]bool
+	Floor int
+	Dir int
+}
+	
 
 // Only message sent over the network
 type Message struct{
@@ -23,6 +30,7 @@ type Message struct{
 	Floor int
 	Button int
 	Cost int
+	ElevInfo ElevatorInfo
 }
 
 type ConnectionUDP struct{
@@ -30,13 +38,13 @@ type ConnectionUDP struct{
 	Timer *time.Timer
 }
 
-const ResetConnTime = 100*time.Second
+const ResetConnTime = 60*time.Second
 
 
 
 var LocalAddress *net.UDPAddr
 
-var MessageCh = make(chan Message) 
+var MessageChan = make(chan Message) 
 var SyncLightChan = make(chan bool)
 
 // Finds the last quadrant of the IP address

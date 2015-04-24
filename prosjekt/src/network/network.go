@@ -12,31 +12,31 @@ var sendChan = make(chan messageUDP)
 const NotifyInterval = 20*time.Second
 
 func Init(){
-	const localListenPort = 13369
-	const broadcastListenPort = 13370
+	const localListenPort = 14369
+	const broadcastListenPort = 14370
 	const messageSize = 1024
 
 	err := InitUDP(localListenPort, broadcastListenPort, messageSize, sendChan, RecieveChan)
 	if err != nil {
-		fmt.Print("InitUDP error: %s \n", err)
+		fmt.Printf("InitUDP error: %v \n", err)
 	}
 
 	go aliveNotifier()
-	go checkOutgoingMessages()
+	go sendMessages()
 }
 
 func aliveNotifier() {
-	alive := Message{Content: Alive, Floor: -1, Button: -1, Cost: -1}
+	alive := Message{Content: Alive, Floor: -1, Button: -1}
 	for {
-		MessageCh <- alive
+		MessageChan <- alive
 		time.Sleep(NotifyInterval)
 	}
 }
 
-func checkOutgoingMessages() {
+func sendMessages() {
 	for {
-		fmt.Println("checkOutgoingMessages waiting on MessageCh")
-		msg := <-MessageCh
+		fmt.Println("sendMessages waiting on MessageChan")
+		msg := <-MessageChan
 
 		PrintMessage(msg)
 
@@ -60,14 +60,14 @@ func PrintMessage(msg Message) {
 		fmt.Println("New order")
 	case CompletedOrder:
 		fmt.Println("Completed order")
-	case Cost:
-		fmt.Println("Cost:")
+	case Info:
+		fmt.Println("Elevator info:")
 	default:
 		fmt.Println("Invalid message type\n")
 	}
 	fmt.Printf("Floor: %d\n", msg.Floor)
 	fmt.Printf("Button: %d\n", msg.Button)
-	fmt.Printf("Cost:   %d\n", msg.Cost)
+	fmt.Printf("Elev now in floor %v with direction %v\n", msg.ElevInfo.Floor, msg.ElevInfo.Dir)
 	fmt.Println("-----Message end-------\n")
 }
 

@@ -44,7 +44,7 @@ func InitUDP(localListenPort, broadcastPort, messageSize int, sendCh, recieveCh 
 	if err != nil {
 		return err
 	}
-	
+		
 	broadcastListenConn, err := net.ListenUDP("udp", broadcastAddr)
 	if err != nil {
 		localListenConn.Close()
@@ -53,7 +53,7 @@ func InitUDP(localListenPort, broadcastPort, messageSize int, sendCh, recieveCh 
 	
 	go recieveServerUDP(localListenConn, broadcastListenConn, messageSize, recieveCh)
 	go transmitServerUDP(localListenConn, broadcastListenConn, sendCh)
-	
+
 	return err
 }
 
