@@ -1,23 +1,23 @@
-når heisen har ordre ned i etasje 1 og 3 og stopper i etasje 2 på vei opp går den først til 1 etasje og så til 3.
+når heisen har ordre ned i etasje 1 og 3 og stopper i etasje 2 på vei opp går den først til 1 etasje og så til 3. - kanskje OK. kjør test
 
-hvis heisen er i toppen vil canCompleteOrder bugge seg
+hvis heisen er i toppen vil canCompleteOrder bugge seg ---- tror ikke dette er en feil lengre
 
-bugger seg hvis den har ordre både opp og ned
+bugger seg hvis den har ordre både opp og ned --- kanskje OK. kjør test (la til sjekk i toppen av getNewDir)
 
-noe er galt med etasje 1
+noe er galt med etasje 1 - vet ikke hva bugget er. kjør flere tester ----- for å sjekke: skriv ut om den registrer at den er i etasjen
 
-hva skjer når den har en ordre ned fra en etasje, og stopper der uten flere ordre? (kjører videre)
+hva skjer når den har en ordre ned fra en etasje, og stopper der uten flere ordre? (kjører videre) ----- dette skjer ikke?
 
-fjerner ordre fra etasje 2 når den står i 3 (evt fjerner ordre uten å stoppe)
+fjerner ordre fra etasje 2 når den står i 3 (evt fjerner ordre uten å stoppe) --- sjekk kommentar ved removeOrders
 
-det er noe galt med etasje 1, heisen stopper ikke før den er på vei nedover igjen.
+det er noe galt med etasje 1, heisen stopper ikke før den er på vei nedover igjen. 
 
-kunne ikke utføre ordre ned i første etasje når heisen var i første etasje
+kunne ikke utføre ordre ned i første etasje når heisen var i første etasje ----- burde være løst med endringen i getNewDir
 
-når heisen står i 1 og har ordre opp og ned beveger den seg ikke (utførte ordre når den fikk en intern ordre til samme etasje) - sjekk canComplete
+når heisen står i 1 og har ordre opp og ned beveger den seg ikke (utførte ordre når den fikk en intern ordre til samme etasje) - sjekk canComplete ---- burde også være løst med endringen i getNewDir
 
-Blir stuck i nederste etasje (kjører forbi)
+Blir stuck i nederste etasje (kjører forbi) ----- har mekket en stop_elev funksjon, setter speed i motsatt retning før 0
 
-fiks lys
+fiks lys ------ burde være ok. la til set_lamp i add- og removeOrder
 
-klarer av og til ikke å stoppe i etasjer (etasjer midt i)
+klarer av og til ikke å stoppe i etasjer (etasjer midt i) ---- må kjøre flere tester

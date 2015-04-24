@@ -115,22 +115,24 @@ func (e *Elevator) Run() {
 			}
 		else { */
 				if Elev_get_stop_signal() {
-					Elev_set_speed(0)
+					Elev_stop_elev(e.direction)
 					Elev_set_stop_lamp(-1)
 					// hva skal skje når stop-knappen trykkes?
 				} 
 				if e.orderOnCurrentFloor() && e.canCompleteOrder() && e.direction != 0 {
-					Elev_set_speed(0)
+					Elev_stop_elev(e.direction)
 					if e.currentFloor == 3 || e.currentFloor == 0 {
-						e.removeAllOrdersOnFloor(e.currentFloor)
+						e.removeAllOrdersOnFloor(e.currentFloor) // prøv e.location for å unngå å fjerne ordre i etasjer heisen har forlatt
 					} else if e.direction > 0 {
 						e.removeOrdersGoingUp(e.currentFloor)
 					} else if e.direction < 0 {
 						e.removeOrdersGoingDown(e.currentFloor)
 					} 
 					Println("I ORDER ON CURRENT FLOOR: SOVER")
+					Elev_set_door_open_lamp(1)
 					Sleep(3*Second)
-				} else if e.location != -1 {
+					Elev_set_door_open_lamp(0)
+				} else if e.location != -1 { // lag egen if statement her for å kjøre dette når den stopper?
 					if e.orderInCurrentDir() {
 						Println("setter speed")
 						Elev_set_speed(300*e.direction)
@@ -164,6 +166,7 @@ func (e *Elevator) UpdateStatus() {
 		
 		if e.location != -1  && e.currentFloor != e.location{
 			e.currentFloor = e.location
+			elev_set_floor_indicator(e.currentFloor)
 			//send reachedfloor
 			
 		}
@@ -174,10 +177,12 @@ func (e *Elevator) UpdateStatus() {
 
 func (e *Elevator) addOrder(order ButtonSignal) {
 	e.orderMatrix[order.Floor][order.Button - 1] = true
+	Elev_set_button_lamp(order)
 }
 
 func (e *Elevator) removeOrder(floor int, button int) {
 	e.orderMatrix[floor][button - 1] = false
+	Elev_set_button_lamp(ButtonSignal{button, floor, 0})
 }
 
 func (e *Elevator) removeAllOrdersOnFloor(floor int) {

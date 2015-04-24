@@ -2,7 +2,7 @@ package driver
 
 import (
 	"math"
-	//."time"
+	."time"
 	."fmt"
 )
 
@@ -45,12 +45,12 @@ func Elev_init() int {
 
 	for i := 0; i < N_FLOORS; i++ {
 		if i != 0 {
-			Elev_set_button_lamp(ButtonSignal{i, BUTTON_CALL_DOWN, 0})
+			Elev_set_button_lamp(ButtonSignal{BUTTON_CALL_DOWN, i, 0})
 		}
 		if i != N_FLOORS-1 {
-			Elev_set_button_lamp(ButtonSignal{i, BUTTON_CALL_UP, 0})
+			Elev_set_button_lamp(ButtonSignal{BUTTON_CALL_UP, i, 0})
 		}
-		Elev_set_button_lamp(ButtonSignal{i, BUTTON_COMMAND, 0})
+		Elev_set_button_lamp(ButtonSignal{BUTTON_COMMAND, i, 0})
 	}
 
 	Elev_set_stop_lamp(0)
@@ -189,4 +189,15 @@ func Elev_set_door_open_lamp(value int) {
 	} else {
 		Io_clear_bit(LIGHT_DOOR_OPEN)
 	}
+}
+
+func Elev_stop_elev(dir int) {
+	if dir > 0 {
+		Elev_set_speed(-300)
+		Sleep(5*Millisecond)
+	} else if dir < 0 {
+		Elev_set_speed(300)
+		Sleep(5*Millisecond)
+	} 
+	Elev_set_speed(0)
 }

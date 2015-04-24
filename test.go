@@ -33,6 +33,8 @@ func main(){
 	kuk := int(float64(asd) + dsa)
 	Println(matr[1])
 	Printf("KUK %v", kuk)
+	kukbool := false
+	Println(kuk*int(kukbool))
 }
 
 
