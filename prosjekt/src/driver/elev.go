@@ -3,15 +3,15 @@ package driver
 import (
 	"math"
 	."time"
-	."fmt"
+	//."fmt"
 )
 
 
 
 const (
-	BUTTON_CALL_UP int = 1
-	BUTTON_CALL_DOWN int = 2
-	BUTTON_COMMAND int = 3
+	BUTTON_CALL_UP int = 0
+	BUTTON_CALL_DOWN int = 1
+	BUTTON_COMMAND int = 2
 
 	N_BUTTONS int = 3
 	N_FLOORS int = 4
@@ -60,7 +60,7 @@ func Elev_init() int {
 	return 1
 }
 
-func Elev_set_speed(speed int) {
+func Elev_set_speed(speed int) int {
 	last_speed := 0
 	if speed > 0 {
 		Io_clear_bit(MOTORDIR)
@@ -73,6 +73,7 @@ func Elev_set_speed(speed int) {
 	}
 	last_speed = speed
  	Io_write_analog(MOTOR, int(2048+4*math.Abs(float64(speed))))
+	return speed
 }
 
 
@@ -106,7 +107,7 @@ func (sig *ButtonSignal) ClearPrevButtonSig() {
 */
 
 func Elev_get_order(intOrderChan chan ButtonSignal, extOrderChan chan ButtonSignal) {
-	Println("getorder")
+
 	var buttonSig ButtonSignal
 
 	//var prevButtonSig ButtonSignal 
@@ -114,27 +115,28 @@ func Elev_get_order(intOrderChan chan ButtonSignal, extOrderChan chan ButtonSign
 
 	for{
 		for i := 0; i < 3; i++ {
-			if (Elev_get_button_signal(BUTTON_CALL_UP-1, i) == 1) {
+			if (Elev_get_button_signal(BUTTON_CALL_UP, i) == 1) {
 				buttonSig.Floor =  i
 				buttonSig.Button = BUTTON_CALL_UP
-				Println("sender ordre opp")
-				Println(buttonSig.Floor)
+				buttonSig.Light = 1
 				extOrderChan <- buttonSig
-			} else if (Elev_get_button_signal(BUTTON_CALL_DOWN-1, i+1) == 1) {
+			} else if (Elev_get_button_signal(BUTTON_CALL_DOWN, i+1) == 1) {
 				buttonSig.Floor =  i+1
 				buttonSig.Button = BUTTON_CALL_DOWN
+				buttonSig.Light = 1
 				extOrderChan <- buttonSig
 			} 
 		}
 
 		for i := 0; i < 4; i++ {
         
-			if ( Elev_get_button_signal( BUTTON_COMMAND-1, i ) == 1 ) {
+			if ( Elev_get_button_signal( BUTTON_COMMAND, i ) == 1 ) {
 				buttonSig.Floor =  i
 				buttonSig.Button = BUTTON_COMMAND
 				intOrderChan <- buttonSig
 			}
 		}
+		Sleep(30*Millisecond)
 	//go prevButtonSig.ClearPrevButtonSig()
 	}
 }
@@ -191,13 +193,14 @@ func Elev_set_door_open_lamp(value int) {
 	}
 }
 
-func Elev_stop_elev(dir int) {
+func Elev_stop_elev(dir int) int {
 	if dir > 0 {
 		Elev_set_speed(-300)
-		Sleep(5*Millisecond)
+		Sleep(5*Microsecond)
 	} else if dir < 0 {
 		Elev_set_speed(300)
-		Sleep(5*Millisecond)
+		Sleep(5*Microsecond)
 	} 
 	Elev_set_speed(0)
+	return 0
 }
