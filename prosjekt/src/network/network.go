@@ -6,7 +6,7 @@ import (
 	"encoding/json"
 )
 
-var RecieveChan = make(chan messageUDP)
+var RecieveChan = make(chan messageUDP) //Public
 var sendChan = make(chan messageUDP)
 
 const NotifyInterval = 20*time.Second
@@ -26,7 +26,7 @@ func Init(){
 }
 
 func aliveNotifier() {
-	alive := Message{Content: Alive, Floor: -1, Button: -1}
+	alive := Message{Content: Alive, Addr: "broadcast", Floor: -1, Button: -1}
 	for {
 		MessageChan <- alive
 		time.Sleep(NotifyInterval)
@@ -39,13 +39,13 @@ func sendMessages() {
 		msg := <-MessageChan
 
 		PrintMessage(msg)
-
+		raddr := msg.Addr
 		jsonMsg, err := json.Marshal(msg)
 		if err != nil {
 			fmt.Print("json.Marshal error: %s \n", err)
 		}		
 		
-		sendChan <- messageUDP{recieveAddr: "broadcast", data: jsonMsg, length: len(jsonMsg)}
+		sendChan <- messageUDP{recieveAddr: raddr, data: jsonMsg, length: len(jsonMsg)}
 
 		time.Sleep(time.Millisecond)
 	}

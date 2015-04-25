@@ -25,7 +25,6 @@ func PrintUDPMessage(msg  messageUDP){ //Private?
 func InitUDP(localListenPort, broadcastPort, messageSize int, sendCh, recieveCh chan messageUDP)(err error){
 	fmt.Println("InitUDP running")
 	
-	// udp/udp4/udp6?
 	broadcastAddr, err = net.ResolveUDPAddr("udp","255.255.255.255:"+strconv.Itoa(broadcastPort))
 	// ? Dette error-opplegget eller panic?
 	if err != nil{
@@ -96,7 +95,7 @@ func transmitServerUDP(lConn, bConn *net.UDPConn, sendCh chan messageUDP) {
 	var n int
 
 	for {
-		msg := <-sendCh
+		msg := <-sendCh // Venter på ny melding å sende
 		
 		if msg.recieveAddr == "broadcast" {
 			n, err = lConn.WriteToUDP(msg.data, broadcastAddr)
@@ -112,7 +111,7 @@ func transmitServerUDP(lConn, bConn *net.UDPConn, sendCh chan messageUDP) {
 			fmt.Printf("Error in transmitServerUDP \n")
 			panic(err)
 		}
-		
+		fmt.Printf("transmitServerUDP sent %s to %s\n", msg.Data, msg.recieveAddr)
 	}
 }
 

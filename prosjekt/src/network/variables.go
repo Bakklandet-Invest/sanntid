@@ -27,7 +27,7 @@ type ElevatorInfo struct{
 type Message struct{
 	Content int
 	Addr string
-	Floor int
+	Floor int //Floor hvor knappen er trykket
 	Button int
 	//Cost int
 	ElevInfo ElevatorInfo
