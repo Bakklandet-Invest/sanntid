@@ -111,7 +111,7 @@ func transmitServerUDP(lConn, bConn *net.UDPConn, sendCh chan messageUDP) {
 			fmt.Printf("Error in transmitServerUDP \n")
 			panic(err)
 		}
-		fmt.Printf("transmitServerUDP sent %s to %s\n", msg.Data, msg.recieveAddr)
+		fmt.Printf("transmitServerUDP sent %s to %s\n", msg.data, msg.recieveAddr)
 	}
 }
 

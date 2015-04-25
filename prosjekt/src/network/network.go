@@ -25,6 +25,19 @@ func Init(){
 	go sendMessages()
 }
 
+func ParseMessage(msgUDP messageUDP) Message {
+	fmt.Printf("Before parse: %s from %s\n", string(msgUDP.data), msgUDP.recieveAddr)
+
+	var msg Message
+	if err := json.Unmarshal(msgUDP.data[:msgUDP.length], &msg); err != nil {
+		fmt.Printf("json.Unmarshal error: %s\n", err)
+	}
+
+	msg.Addr = msgUDP.recieveAddr
+	fmt.Printf("After Unmarshal: %s\n", msg.Addr)
+	return msg
+}
+
 func aliveNotifier() {
 	alive := Message{Content: Alive, Addr: "broadcast", Floor: -1, Button: -1}
 	for {
@@ -71,15 +84,4 @@ func PrintMessage(msg Message) {
 	fmt.Println("-----Message end-------\n")
 }
 
-func ParseMessage(msgUDP messageUDP) Message {
-	fmt.Printf("Before parse: %s from %s\n", string(msgUDP.data), msgUDP.recieveAddr)
 
-	var msg Message
-	if err := json.Unmarshal(msgUDP.data[:msgUDP.length], &msg); err != nil {
-		fmt.Printf("json.Unmarshal error: %s\n", err)
-	}
-
-	msg.Addr = msgUDP.recieveAddr
-	fmt.Printf("After Unmarshal: %s\n", msg.Addr)
-	return msg
-}

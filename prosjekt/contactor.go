@@ -33,26 +33,27 @@ func selectMaster(lifts map[string]network.ConnectionUDP)string {
 
 //func masterAlive()bool{
 //}
+/* ---HUSKELISTE
+	ElevInfo må pakkes i ElevatorRun
+*/ /*
+func Slave(){
 
-func Slave(
-
-	
-	updateChan := make(chan Message)
+	updateOutChan := make(chan network.Message)
+	updateInChan := make(chan network.Message)
 	extOrderChan := make(chan ButtonSignal)
 	newOrderChan := make(chan ButtonSignal)
 	fromMasterChan := make(chan ButtonSignal)
-	readUDPButtonSig := make(chan ButtonSignal)
-	
-	go ELEVATORRUN
-	go networkHandler
+		
+	//go ELEVATORRUN
+	go networkHandler()
 	
 	for{
 		select{
-			case update := <- updateChan
+			case update := <- updateOutChan
 				updateMsg := network.Message{Content: network.Info, Addr: "broadcast", ElevInfo: update}
 				network.MessageChan <- updateMsg
 			case extOrdButtonSignal := <- extOrderChan
-				extOrdMsg := network.Message{Content: network.newOrder, Addr: <addresse til master>, Floor: extOrdButtonSignal.Floor, Button: extOrdButtonSignal.Button}
+				extOrdMsg := network.Message{Content: network.NewOrder, Addr: <addresse til master>, Floor: extOrdButtonSignal.Floor, Button: extOrdButtonSignal.Button}
 				network.MessageChan <- extOrdMsg //Få pakket forunftig beskjed her først da, med recieverAddr til MASTER
 			case order := <- newOrderChan
 				fromMasterChan <- order
@@ -60,18 +61,19 @@ func Slave(
 	}
 }
 
+*/
 
-
-//INNE I ELEVATORRUN -- EDIT: Dette skjer her(pakking av meldinger)
-updateChan <- Message{Content: Info, ElevInfo: infoMessage} 
-
-
+func main(){
+	var kanal = make(chan int)
+	
+	go networkHandler()
+	
+	<-kanal
+}
 
 func networkHandler(){
 	network.Init()
-//	go writemap()
-	
-
+	go writemap()
 	for{
 		select{
 		case msg := <-network.RecieveChan:
@@ -83,8 +85,6 @@ func networkHandler(){
 			
 	}
 }
-
-  massageHandler(
 
 
 func messageHandler(msg network.Message) {
