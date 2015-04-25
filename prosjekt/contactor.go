@@ -9,7 +9,7 @@ import(
 	"fmt"
 	"strconv"
 	"net"
-	//"control"
+	"control"
 	."driver"
 )
 
@@ -64,7 +64,7 @@ func main(){
 	
 	
 	go networkHandler(updateInChan, checkMasterChan, newOrderChan, completeOrderChan)
-	//go InitElevator(updateOutChan, updateInChan, checkMasterChan, newOrderChan, completeOrderChan, extOrderChan, fromMasterChan)
+	go control.InitElevator(updateOutChan,  checkMasterChan, completeOrderChan, extOrderChan, fromMasterChan)
 	go Master(updateOutChan, checkMasterChan, newOrderChan, completeOrderChan, extOrderChan, fromMasterChan)
 
 	<-hengekanal

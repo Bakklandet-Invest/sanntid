@@ -9,7 +9,7 @@ import(
 	"fmt"
 	"strconv"
 	"net"
-	//"control"
+	"control"
 	."driver"
 )
 
@@ -21,7 +21,6 @@ func writemap(checkMasterChan chan string) {
 	for {
 		fmt.Printf("%v lifts online, master id: %v\n",len(liftsOnline),selectMaster(liftsOnline, checkMasterChan))
 		fmt.Println("liftsOnline:",liftsOnline)
-		//fmt.Println("Master har ID:",selectMaster(liftsOnline, checkMasterChan))
 		time.Sleep(time.Second*10)
 	}
 }
@@ -65,7 +64,7 @@ func main(){
 	
 	
 	go networkHandler(updateInChan, checkMasterChan, newOrderChan, completeOrderChan)
-	//go InitElevator(updateOutChan, updateInChan, checkMasterChan, newOrderChan, completeOrderChan, extOrderChan, fromMasterChan)
+	go InitElevator(updateOutChan,  checkMasterChan, completeOrderChan, extOrderChan, fromMasterChan)
 	go Master(updateOutChan, checkMasterChan, newOrderChan, completeOrderChan, extOrderChan, fromMasterChan)
 
 	<-hengekanal

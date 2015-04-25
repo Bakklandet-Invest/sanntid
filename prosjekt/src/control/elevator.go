@@ -8,6 +8,7 @@ import (
 	."fmt"
 	."time" 
 	"math"
+	"network"
 	)
 
 type Matrix [4][3]bool
@@ -41,7 +42,7 @@ func FindElevID() int {
     return 0
 }
 
-func InitElevator(updateOutChan chan network.ElevatorInfo, updateInChan chan network.ElevatorInfo, checkMasterChan chan string, newOrderChan chan ButtonSignal, completeOrderChan chan ButtonSignal, fromMasterChan chan ButtonSignal, intOrderChan chan ButtonSignal, extOrderChan chan ButtonSignal ) *Elevator {
+func InitElevator(updateOutChan chan network.ElevatorInfo, checkMasterChan chan string, completeOrderChan chan ButtonSignal, extOrderChan chan ButtonSignal, fromMasterChan chan ButtonSignal) *Elevator {
 
 	if Elev_init() != 1 {
 		Println("Could not initialize elevator")
@@ -70,15 +71,15 @@ func InitElevator(updateOutChan chan network.ElevatorInfo, updateInChan chan net
 	fromMasterChan := make(chan ButtonSignal)
 	*/
 
-	//intOrderChan := make(chan ButtonSignal, 1) // brukes i solo
+	//
 	//extOrderChan := make(chan ButtonSignal, 1) // brukes i solo
 	
 
 	/* CHANALS SOM ER INTERNE */
 	arrivedAtFloorChan := make(chan int, 1) 
 	getMovingChan := make(chan int, 1)
-
-	go e.OrderHandler(intOrderChan, extOrderChan, fromMasterChan)
+	intOrderChan := make(chan ButtonSignal, 1) // brukes i solo
+	go e.OrderHandler(intOrderChan, fromMasterChan, getMovingChan)
 	go Elev_get_order(intOrderChan, extOrderChan)
 	go e.Run(arrivedAtFloorChan, getMovingChan, completeOrderChan)
 	go e.UpdateStatus(arrivedAtFloorChan, updateOutChan)
@@ -210,7 +211,7 @@ func (e *Elevator) addOrder(order ButtonSignal) {
 func (e *Elevator) removeSingleExtOrder(floor int, button int, completeOrderChan chan ButtonSignal) {
 	e.orderMatrix[floor][button] = false
 	Elev_set_button_lamp(ButtonSignal{button, floor, 0}) // lag en lokal "completedOrder" variabel?
-	completedOrderChan <- {ButtonSignal{button, floor, 0}
+	completeOrderChan <- ButtonSignal{button, floor, 0}
 }
 
 func (e *Elevator) removeSingleIntOrder(floor int, button int) { //mulig denne er ubrukelig hvis master styrer lys
@@ -268,7 +269,7 @@ func (e *Elevator) getNewDirection(arrivedAtFloorChan chan int) {
 			Printf("SETTER DIRECTION = %v\n", -1)
 			e.direction = -1
 		} else {
-			e.removeSingleOrder(e.currentFloor, BUTTON_COMMAND)			
+			e.removeSingleIntOrder(e.currentFloor, BUTTON_COMMAND)			
 			return
 		}
 		arrivedAtFloorChan <- 1
