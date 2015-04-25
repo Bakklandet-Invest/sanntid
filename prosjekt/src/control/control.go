@@ -1,10 +1,10 @@
 package control
-
+/*
 import (
 	"network"
 	"elevator"
 	)
-	
+
 func slave() {
 	updateChan := make(chan Message)
 	exOrderChan := make(chan ButtonSignal)
@@ -44,4 +44,4 @@ func slave() {
 
 	return
 }
-
+*/

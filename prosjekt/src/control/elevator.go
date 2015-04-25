@@ -18,15 +18,10 @@ type Elevator struct {
 	direction int
 	currentFloor int
 	location int
-	//locked bool
 	speed int
 	
 
 	
-	// newOrderNotifyChan chan bool 
-		// bruke en kanal for å gi beskjed når en ny ordre kommer for å unngå
-		// forløkker som kjører konstant. En input i notify setter i gang 
-		// GetNextDestination som igjen setter i gang en case i Run
 }
 
 func FindElevID() int {
@@ -90,7 +85,7 @@ func InitElevator() *Elevator {
 }
 
 
-func (e *Elevator) OrderHandler(intOrderChan chan ButtonSignal, extOrderChan chan ButtonSignal, getMovingChan chan int /*, fromMasterChan chan ButtonSignal*/) {
+func (e *Elevator) OrderHandler(intOrderChan chan ButtonSignal, extOrderChan chan ButtonSignal, getMovingChan chan int) {
 	// external order, send til master
 	// internal order legg til først i stopplisten 
 	// (kun etter orders som er i etasjer over og i riktig retning)
@@ -99,18 +94,11 @@ func (e *Elevator) OrderHandler(intOrderChan chan ButtonSignal, extOrderChan cha
 	for{
 		Println("starten av OrderHandler løkke")
 		select{
-			case newOrder = <- extOrderChan: // slave() leser direkte fra extOrderChan (fjern)
+			case newOrder = <- extOrderChan:
 				e.addOrder(newOrder)
 				if e.direction == 0 {
 					getMovingChan <- 1
 				}
-				/* SEND MESSAGE TIL MASTER
-			case newOrder = <- fromMasterChan:
-				e.addOrder(newOrder)
-				if e.direction == 0 {
-					getMovingChan <- 1
-				}
-				*/
 			case newOrder = <- intOrderChan:
 				e.addOrder(newOrder)
 				if e.direction == 0 {
@@ -126,71 +114,51 @@ func (e *Elevator) Run(arrivedAtFloorChan chan int, getMovingChan chan int) {
 	for{
 		Println("STARTEN AV RUN")
 		select{
-			case <- stopSignalChan: 
-				e.speed = Elev_set_speed(0)
+			/*case <- stopSignalChan:
+				//e.speed = Elev_set_speed(0)
+				e.speed = Elev_stop_elev(e.direction)
 				Elev_set_stop_lamp(-1)
-				// hva mer skal skje?
-			case <- isObstructedChan:
-				// handle obstruction
+				// hva skal skje når stop-knappen trykkes?
+			 */
+			/*case <- obstuctionChan:
+				// handle obstruction 
+			*/
 			case <- arrivedAtFloorChan:
-						 
-				if e.canCompleteOrder() || !e.moreOrdersInCurrentDir() { // del opp if - if else
-					e.speed = Elev_set_speed(0)
-					// hvis (e.moreOrdersInDir() (sjekker om orderen i etasjen vil samme vei) (bruk orderWithSameDir og inkluder nåværende etasje) -> behold dir
-					// hvis (!.moreOrdersInDir())
+					
+				if e.canCompleteOrder()  || !e.moreOrdersInDir() {
+					//e.speed = Elev_set_speed(0)
+					e.speed = Elev_stop_elev(e.direction)
+					
+					if e.moreOrdersInDir() {
+						// e.direction = e.direction
+					} else if e.orderInOtherDir() {
+						e.direction = -e.direction
+					} else {
+						e.direction = 0
+					}
+					
 					Println("I ORDER ON CURRENT FLOOR: SOVER")
 					Elev_set_door_open_lamp(1)
 					Sleep(2*Second)
 					Elev_set_door_open_lamp(0)
-					if e.currentFloor == 3 || e.currentFloor == 0 { // lag en egen funksjon for denne delen
-						e.removeAllOrdersOnFloor(e.currentFloor) 
-					} else if e.direction > 0 {
-						e.removeOrdersGoingUp(e.currentFloor) // legg til en keep moving kanal inne i denne for å unngå at det henger i orderHandler
-					} else if e.direction < 0 {
-						e.removeOrdersGoingDown(e.currentFloor)
+
+					e.removeOrders()
+
+					if e.moreOrdersInDir() {
+							// e.direction = e.direction
+					} else if e.orderInOtherDir() {
+							e.direction = -e.direction
 					} else {
-						if e.currentFloor >= N_FLOORS/2 {
-							e.removeOrdersGoingUp(e.currentFloor)
-							e.direction = 1
-						} else {
-							e.removeOrdersGoingDown(e.currentFloor)
-							e.direction = -1
-						}
+							e.direction = 0
 					}
-				} // dette vil sannsynligvis være ubrukelig
-				if e.orderWithSameDir() && e.speed == 0 {
-					Println("setter speed")
-					e.speed = Elev_set_speed(300*e.direction)
-					continue
-				} else if e.orderInOtherDir() && e.speed == 0 {
-					Println("setter speed og endrer retning")
-					e.direction = -e.direction
-					if e.canCompleteOrder() {
-						arrivedAtFloorChan <- 1
-					}
-					e.speed = Elev_set_speed(300*e.direction)
-				} else if e.speed == 0 {
-					e.direction = 0
-				} // ubrukelig til hit
+					Elev_set_speed(300*e.direction)	
+			}
+			
+			
 			case <- getMovingChan:
 				if e.direction == 0 {
 					e.getNewDirection(arrivedAtFloorChan)
 					e.speed = Elev_set_speed(300*e.direction)							
-					/*if e.orderWithSameDir() {
-						Println("setter speed")
-								
-						e.speed = Elev_set_speed(300*e.direction)
-								
-						continue
-					} else if e.orderInOtherDir() {
-						Println("setter speed og endrer retning")
-						
-						e.direction = -e.direction
-						e.speed = Elev_set_speed(300*e.direction)
-							
-					}*//* else if e.speed == 0 {
-						e.direction = 0
-					}*/
 				}
 
 			}
@@ -198,8 +166,7 @@ func (e *Elevator) Run(arrivedAtFloorChan chan int, getMovingChan chan int) {
 }	//func
 
 
-func (e *Elevator) UpdateStatus(arrivedAtFloorChan chan int/*, updateChan chan network.ElevatorInfo*/) {
-	lastDir = e.direction
+func (e *Elevator) UpdateStatus(arrivedAtFloorChan chan int) {
 	for {
 		e.location = Elev_get_floor_sensor_signal()
 		
@@ -209,16 +176,9 @@ func (e *Elevator) UpdateStatus(arrivedAtFloorChan chan int/*, updateChan chan n
 			Printf("----------------------\nI ETASJE %v\n--------------------\n", Elev_get_floor_sensor_signal())
 			//send reachedfloor
 			arrivedAtFloorChan <- 1
-			/* SEND MESSAGE TIL MASTER
-			updateChan <- ElevatorInfo{}
-			*/
-			/* SEND MESSAGE TIL MASTER
-		} else if e.direction != lastDir{
-			// send update
+			
 		}
-		*/
 		Sleep(50*Millisecond)
-		}
 	}
 }
 
@@ -248,7 +208,7 @@ func (e *Elevator) removeOrdersGoingDown(floor int) {
 	e.removeSingleOrder(floor, BUTTON_CALL_DOWN)
 	e.removeSingleOrder(floor, BUTTON_COMMAND)
 }
-/* BRUK I RUN
+
 func (e *Elevator) removeOrders() { 
 	if e.currentFloor == 3 || e.currentFloor == 0 { // lag en egen funksjon for denne delen
 		e.removeAllOrdersOnFloor(e.currentFloor) 
@@ -266,13 +226,31 @@ func (e *Elevator) removeOrders() {
 		}
 	}
 }
-*/
+
 func (e *Elevator) getNewDirection(arrivedAtFloorChan chan int) {
 		// return int eller send på channel ? - skriv til e.direction
-	if (e.orderMatrix[e.currentFloor][0] || e.orderMatrix[e.currentFloor][1] || e.orderMatrix[e.currentFloor][2]) {
+	if e.orderOnFloor(e.currentFloor) {
+		if e.orderMatrix[e.currentFloor][0] && e.orderMatrix[e.currentFloor][1] {
+			if e.currentFloor >= N_FLOORS/2 {
+				Printf("SETTER DIRECTION = %v\n", 1)
+				e.direction = 1
+			} else {
+				Printf("SETTER DIRECTION = %v\n", -1)
+				e.direction = -1
+			}
+		} else if e.orderMatrix[e.currentFloor][0] {
+			Printf("SETTER DIRECTION = %v\n", 1)
+			e.direction = 1
+		} else if e.orderMatrix[e.currentFloor][1] {
+			Printf("SETTER DIRECTION = %v\n", -1)
+			e.direction = -1
+		} else {
+			e.removeSingleOrder(e.currentFloor, BUTTON_COMMAND)			
+			return
+		}
 		arrivedAtFloorChan <- 1
 		return
-	} //FIKS
+	}							 //FIKS
 	dist := N_FLOORS
 	next := e.currentFloor
 	for i := 0; i <= 3; i++ {
@@ -314,24 +292,32 @@ func (e *Elevator) getNewDirection(arrivedAtFloorChan chan int) {
 }
 
 
-func (e *Elevator) orderInOtherDir() bool {
+func (e *Elevator) orderInOtherDir() bool { // returnerer true hvis heisen skal bytte dir
 	if e.direction > 0 {
-		for i := 0; i <= 3; i++ {
-			if e.orderMatrix[i][1] || e.orderMatrix[i][2] {
-				return true
+		if e.orderMatrix[e.currentFloor][1] {
+			return true
+		} else {
+			for i := 0; i < e.currentFloor; i++ {
+				if e.orderOnFloor(i) {
+					return true
+				}
+			}
+		}		
+	} else if e.direction < 0 {
+		if e.orderMatrix[e.currentFloor][0] {
+			return true
+		} else {
+			for i := 3; i < e.currentFloor; i-- {
+				if e.orderOnFloor(i) {
+					return true
+				}		
 			}
 		}
-	} else if e.direction < 0 {
-		for i := 0; i <= 3; i++ {
-			if e.orderMatrix[i][0] || e.orderMatrix[i][2] {
-				return true
-			}		
-		}
-	}
+	} 
 	return false
 }
 
-func (e *Elevator) moreOrdersInCurrentDir() bool {
+func (e *Elevator) orderInCurrentDir() bool {
 	if e.direction > 0 {
 		for i := e.currentFloor+1; i <= 3; i++ {
 			if e.orderOnFloor(i) {
@@ -358,33 +344,31 @@ func (e *Elevator) orderOnFloor(floor int) bool {
 }
 
 
-func (e *Elevator) orderWithSameDir() bool { // bytte navn til f.eks "moreOrdersInDir"
+func (e *Elevator) moreOrdersInDir() bool {
 	if e.direction > 0 {
-		for i := e.currentFloor+1; i <= 3; i++ {
-			if e.orderMatrix[i][0] || e.orderMatrix[i][2] {
-				return true
-			} else if i == 3 && e.orderMatrix[i][1] { // bytte dette:
-				return true
-			} // hit
-		} // med dette:
-		/*for i := 3; i > e.currentFloor; i-- {
-			if e.orderMatrix[i][1] {
-				return true
+		if e.currentFloor == 3 {
+			return false
+		} else if e.orderMatrix[e.currentFloor][0] {
+			return true
+		} else {
+			for i := e.currentFloor+1; i < 3; i++ {
+				if e.orderOnFloor(i) {
+					return true
+				}
 			}
-		} */	
+		}		
 	} else if e.direction < 0 {
-		for i := e.currentFloor-1; i >= 0; i-- {
-			if e.orderMatrix[i][1] || e.orderMatrix[i][2] {
-				return true
-			} else if i == 0 && e.orderMatrix[i][0] { // bytt dette:
-				return true
-			} // hit
-		} // med dette:
-		/*for i := 0; i < e.currentFloor; i++ {
-			if e.orderMatrix[i][2] {
-				return true
+		if e.currentFloor == 0 {
+			return false
+		} else if e.orderMatrix[e.currentFloor][1] {
+			return true
+		} else {
+			for i := e.currentFloor-1; i < 0; i-- {
+				if e.orderOnFloor(i) {
+					return true
+				}
 			}
-		} */
+		}
 	}
 	return false
 }
@@ -393,7 +377,9 @@ func (e *Elevator) orderWithSameDir() bool { // bytte navn til f.eks "moreOrders
 
 func (e *Elevator) canCompleteOrder() bool {
 	Println("SJEKKER OM ORDRE KAN GJENNOMFØRES")
-	if e.orderMatrix[e.currentFloor][2] || e.currentFloor == 3 || e.currentFloor == 0 {
+	if e.direction == 0 {
+		return true	
+	} else if e.orderMatrix[e.currentFloor][2] || e.currentFloor == 3 || e.currentFloor == 0 {
 		return true
 	} else if e.orderMatrix[e.currentFloor][0] && e.orderMatrix[e.currentFloor][1] {
 		return true
@@ -426,3 +412,4 @@ func (e *Elevator) printInfo() {
 		Sleep(2*Second)
 	}
 }
+

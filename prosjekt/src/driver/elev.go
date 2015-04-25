@@ -196,10 +196,10 @@ func Elev_set_door_open_lamp(value int) {
 func Elev_stop_elev(dir int) int {
 	if dir > 0 {
 		Elev_set_speed(-300)
-		Sleep(5*Microsecond)
+		Sleep(5*Millisecond)
 	} else if dir < 0 {
 		Elev_set_speed(300)
-		Sleep(5*Microsecond)
+		Sleep(5*Millisecond)
 	} 
 	Elev_set_speed(0)
 	return 0
