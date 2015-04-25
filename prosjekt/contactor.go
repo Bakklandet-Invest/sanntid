@@ -35,6 +35,8 @@ func selectMaster(lifts map[string]network.ConnectionUDP)string {
 //}
 /* ---HUSKELISTE
 	ElevInfo må pakkes i ElevatorRun
+	* ConnTimer tar kun inn network.ConnectionUDP, og vet ikke ID'en
+	* -> fikset at den sletter nå
 */ /*
 func Slave(){
 
@@ -86,7 +88,7 @@ func networkHandler(){
 	}
 }
 
-
+//  msg.Addr byttet med id i liftsonline(key)
 func messageHandler(msg network.Message) {
 	id := network.FindID(msg.Addr)
 	switch msg.Content{
@@ -121,6 +123,8 @@ func connTimer(conn network.ConnectionUDP){
 	}
 }
 
+//endret slik at den sletter vha idkey, ikke addr key
 func deleteLift(addr string){
-	delete(liftsOnline, addr)
+	id := network.FindID(msg.Addr)
+	delete(liftsOnline, id)
 }
