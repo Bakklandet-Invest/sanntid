@@ -5,6 +5,8 @@ import(
 	"time"
 	"fmt"
 	"strconv"
+	"net"
+	."control"
 )
 
 var liftsOnline = make(map[string]network.ConnectionUDP)
@@ -142,7 +144,7 @@ func FindElevID() string/*int*/ {
             }
         }
     }else{
-		fmtprint(err)
+		fmt.Println(err)
 		return "69"
 	} 
 }
@@ -200,7 +202,7 @@ func messageHandler(msg network.Message, updateInChan chan network.Message, chec
 			completeOrderChan <- ButtonSignal{Floor: msg.Floor, Button: msg.Button}
 		case network.Info:
 			// LAGRER INFO OM HEISEN M/ TILHØRENDE ID, hvor?
------------ bruke updateInChan			
+// bruke updateInChan			
 		}		
 }
 
