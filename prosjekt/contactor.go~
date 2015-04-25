@@ -6,7 +6,7 @@ men da kanskje legge inn id i ElevatorInfo også for lettere arbeit.?
 import(
 	"network"
 	"time"
-	"fmt"
+	//"fmt"
 	"strconv"
 	"net"
 	//"control"
