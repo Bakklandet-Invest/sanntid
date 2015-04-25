@@ -1,0 +1,25 @@
+
+ting å få gjort
+
+nettverk
+
+backup - filehandler
+kostfunksjon
+
+
+
+
+
+KOSTFUNKSJON
+	// gjør dette utenfor kostfunksjonen - sjekk først om en heis står stille i etasjen (kost 0) ?
+
+	- hver etasje unna teller 1, hvert stop teller 1 (kan endres). så hvis den må 2 etasjer opp og må stoppe i mellom blir det 3, hvis den bare skal 2 opp uten stop blir det 2
+	- hvis heisen har dir = 0: tell etasjer unna
+	- hvis heisen har dir != 0, tell med stop til hvor langt unna stoppet er. hvis heisen må endre retning, snu når heisen vil snu. (f.eks heisen snur i 1, da må funksjonen snu i 1. og ikke 0.)
+
+
+func cost(ElevInfo) int {
+	if 
+
+
+}

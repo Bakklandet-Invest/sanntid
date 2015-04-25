@@ -6,3 +6,9 @@ if not---- oppdaterer med master (lavest ip)
 
 ubestemt: hvordan master/slaver tar avgjørelser
 
+
+
+
+ha en funksjon som lytter,
+når den mottar, bruk messageHandler til p dekode og sende ut til slave
+
