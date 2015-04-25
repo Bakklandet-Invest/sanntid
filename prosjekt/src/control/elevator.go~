@@ -116,7 +116,7 @@ func (e *Elevator) Run(arrivedAtFloorChan chan int, getMovingChan chan int) {
 		select{
 			/*case <- stopSignalChan:
 				//e.speed = Elev_set_speed(0)
-				e.speed = Elev_stop_elev(e.direction)
+				e.speed = e.stopElevator()
 				Elev_set_stop_lamp(-1)
 				// hva skal skje når stop-knappen trykkes?
 			 */
@@ -124,10 +124,9 @@ func (e *Elevator) Run(arrivedAtFloorChan chan int, getMovingChan chan int) {
 				// handle obstruction 
 			*/
 			case <- arrivedAtFloorChan:
-					
 				if e.canCompleteOrder()  || !e.moreOrdersInDir() {
 					//e.speed = Elev_set_speed(0)
-					e.speed = Elev_stop_elev(e.direction)
+					e.speed = e.stopElevator()
 					
 					if e.moreOrdersInDir() {
 						// e.direction = e.direction
@@ -147,11 +146,16 @@ func (e *Elevator) Run(arrivedAtFloorChan chan int, getMovingChan chan int) {
 					if e.moreOrdersInDir() {
 							// e.direction = e.direction
 					} else if e.orderInOtherDir() {
-							e.direction = -e.direction
+						e.direction = -e.direction
 					} else {
-							e.direction = 0
+						e.direction = 0
 					}
-					Elev_set_speed(300*e.direction)	
+					if e.orderOnCurrentFloorInDir() {
+						arrivedAtFloorChan <- 1
+						continue						
+					} else {
+						e.speed = Elev_set_speed(300*e.direction)
+					}
 			}
 			
 			
@@ -182,6 +186,16 @@ func (e *Elevator) UpdateStatus(arrivedAtFloorChan chan int) {
 	}
 }
 
+func (e *Elevator) stopElevator () int {
+	if e.speed == 0 {
+		return 0
+	} else {
+		Elev_set_speed(-300*e.direction)
+		Sleep(5*Millisecond)
+	} 
+	Elev_set_speed(0)
+	return 0
+}
 
 func (e *Elevator) addOrder(order ButtonSignal) {
 	e.orderMatrix[order.Floor][order.Button] = true
@@ -219,10 +233,10 @@ func (e *Elevator) removeOrders() {
 	} else {
 		if e.currentFloor >= N_FLOORS/2 {
 			e.removeOrdersGoingUp(e.currentFloor)
-			e.direction = 1
+			//e.direction = 1
 		} else {
 			e.removeOrdersGoingDown(e.currentFloor)
-			e.direction = -1
+			//e.direction = -1
 		}
 	}
 }
@@ -292,6 +306,16 @@ func (e *Elevator) getNewDirection(arrivedAtFloorChan chan int) {
 }
 
 
+func (e *Elevator) orderOnCurrentFloorInDir() bool {
+	if e.direction > 0 {
+		return e.orderMatrix[e.currentFloor][0]
+	} else if e.direction < 0 {
+		return e.orderMatrix[e.currentFloor][1]
+	} 
+	return false
+}
+
+
 func (e *Elevator) orderInOtherDir() bool { // returnerer true hvis heisen skal bytte dir
 	if e.direction > 0 {
 		if e.orderMatrix[e.currentFloor][1] {
@@ -351,7 +375,7 @@ func (e *Elevator) moreOrdersInDir() bool {
 		} else if e.orderMatrix[e.currentFloor][0] {
 			return true
 		} else {
-			for i := e.currentFloor+1; i < 3; i++ {
+			for i := e.currentFloor+1; i <= 3; i++ {
 				if e.orderOnFloor(i) {
 					return true
 				}
@@ -363,7 +387,7 @@ func (e *Elevator) moreOrdersInDir() bool {
 		} else if e.orderMatrix[e.currentFloor][1] {
 			return true
 		} else {
-			for i := e.currentFloor-1; i < 0; i-- {
+			for i := 0; i < e.currentFloor; i++ {
 				if e.orderOnFloor(i) {
 					return true
 				}

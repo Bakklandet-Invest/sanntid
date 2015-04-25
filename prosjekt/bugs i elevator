@@ -3,3 +3,58 @@ stykker begge veier i 1 og begge veier i 2 mens den sleeper i 1, fjerner begge i
 
 
 når heisen står stille i en etasje og man først trykker en vei i samme etasje, også trykker den andre veien i sammen etasje blir ikke det andre trykket lagt til. orderhandler henger ved skriving til kanal
+
+
+	opp    ned    intern
+3.	[false false false]
+2.	[true false false]
+1.	[false true false]
+0.	[false false false]
+starten av OrderHandler løkke
+starten av OrderHandler løkke
+starten av OrderHandler løkke
+starten av OrderHandler løkke
+starten av OrderHandler løkke
+starten av OrderHandler løkke
+starten av OrderHandler løkke
+starten av OrderHandler løkke
+starten av OrderHandler løkke
+starten av OrderHandler løkke
+starten av OrderHandler løkke
+starten av OrderHandler løkke
+starten av OrderHandler løkke
+starten av OrderHandler løkke
+----------------------
+I ETASJE 1
+--------------------
+SJEKKER OM ORDRE KAN GJENNOMFØRES
+I ORDER ON CURRENT FLOOR: SOVER
+RETNING: -1 
+CURRENTFLOOR: 1 
+LOCATION: 1 
+ORDERMATRIX
+	opp    ned    intern
+3.	[false false true]
+2.	[true false true]
+1.	[false true true]
+0.	[false false false]
+STARTEN AV RUN
+RETNING: 0 
+CURRENTFLOOR: 1 
+LOCATION: 1 
+ORDERMATRIX
+	opp    ned    intern
+3.	[false false true]
+2.	[true false true]
+1.	[false false false]
+0.	[false false false]
+RETNING: 0 
+CURRENTFLOOR: 1 
+LOCATION: 1 
+ORDERMATRIX
+	opp    ned    intern
+3.	[false false true]
+2.	[true false true]
+1.	[false false false]
+0.	[false false false]
+
