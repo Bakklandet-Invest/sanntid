@@ -2,6 +2,10 @@ stykker begge veier i 1 og begge veier i 2 mens den sleeper i 1, fjerner begge i
 
 
 
+
+
+
+
 når heisen står stille i en etasje og man først trykker en vei i samme etasje, også trykker den andre veien i sammen etasje blir ikke det andre trykket lagt til. orderhandler henger ved skriving til kanal
 
 

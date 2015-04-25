@@ -19,8 +19,6 @@ type Elevator struct {
 	currentFloor int
 	location int
 	speed int
-
-	//leaveCheck int
 	
 
 	
@@ -41,7 +39,7 @@ func FindElevID() int {
     return 0
 }
 
-func InitElevator(updateOutChan chan network.ElevatorInfo, updateInChan chan network.ElevatorInfo, checkMasterChan chan string, newOrderChan chan ButtonSignal, completeOrderChan chan ButtonSignal, fromMasterChan chan ButtonSignal, intOrderChan chan ButtonSignal, extOrderChan chan ButtonSignal ) *Elevator {
+func InitElevator() *Elevator {
 
 	if Elev_init() != 1 {
 		Println("Could not initialize elevator")
@@ -50,6 +48,7 @@ func InitElevator(updateOutChan chan network.ElevatorInfo, updateInChan chan net
 	e := new(Elevator)
 	e.id = FindElevID()
 
+	//e.stopList = llist.New()
 	
 	if Elev_get_floor_sensor_signal() == -1 {
 		e.speed = Elev_set_speed(-300)
@@ -59,29 +58,26 @@ func InitElevator(updateOutChan chan network.ElevatorInfo, updateInChan chan net
 	e.direction = 0
 	e.currentFloor = Elev_get_floor_sensor_signal()
 
-
-	/* CHANALS SOM ER INPUT */
 	/*
-	updateOutChan := make(chan network.ElevatorInfo)
-	updateInChan := make(chan network.ElevatorInfo)
-	checkMasterChan := make(chan string)
-	newOrderChan := make(chan ButtonSignal)
-	completeOrderChan := make(chan ButtonSignal)
-	fromMasterChan := make(chan ButtonSignal)
+	updateChan chan Elevator
+	intOrderChan chan ButtonSignal
+	extOrderChan chan ButtonSignal
+	nextDestinationChan chan int	
 	*/
 
-	//intOrderChan := make(chan ButtonSignal, 1) // brukes i solo
-	//extOrderChan := make(chan ButtonSignal, 1) // brukes i solo
-	
-
-	/* CHANALS SOM ER INTERNE */
-	arrivedAtFloorChan := make(chan int, 1) 
+	//updateChan := make(chan Elevator, 1)
+	intOrderChan := make(chan ButtonSignal, 1)
+	extOrderChan := make(chan ButtonSignal, 1)
+	//masterOrderChan := make(chan ButtonSignal, 1)
+	//nextDestinationChan := make(chan int, 1)
+	arrivedAtFloorChan := make(chan int, 1)
 	getMovingChan := make(chan int, 1)
+	//keepMovingChan := make(chan int, 1)
 
-	go e.OrderHandler(intOrderChan, extOrderChan, fromMasterChan)
+	go e.OrderHandler(intOrderChan, extOrderChan, getMovingChan)
 	go Elev_get_order(intOrderChan, extOrderChan)
-	go e.Run(arrivedAtFloorChan, getMovingChan, completeOrderChan)
-	go e.UpdateStatus(arrivedAtFloorChan, updateOutChan)
+	go e.Run(arrivedAtFloorChan, getMovingChan/*, keepMovingChan*/)
+	go e.UpdateStatus(arrivedAtFloorChan)
 	go e.printInfo()
 	
 	Println("ferdig med init")
@@ -89,13 +85,16 @@ func InitElevator(updateOutChan chan network.ElevatorInfo, updateInChan chan net
 }
 
 
-func (e *Elevator) OrderHandler(intOrderChan chan ButtonSignal, fromMasterChan chan ButtonSignal, getMovingChan chan int) {
+func (e *Elevator) OrderHandler(intOrderChan chan ButtonSignal, extOrderChan chan ButtonSignal, getMovingChan chan int) {
+	// external order, send til master
+	// internal order legg til først i stopplisten 
+	// (kun etter orders som er i etasjer over og i riktig retning)
 	Println("orderhandler")
 	var newOrder ButtonSignal
 	for{
 		Println("starten av OrderHandler løkke")
 		select{
-			case newOrder = <- fromMasterChan:
+			case newOrder = <- extOrderChan:
 				e.addOrder(newOrder)
 				if e.direction == 0 {
 					getMovingChan <- 1
@@ -109,7 +108,7 @@ func (e *Elevator) OrderHandler(intOrderChan chan ButtonSignal, fromMasterChan c
 	}
 }
 
-func (e *Elevator) Run(arrivedAtFloorChan chan int, getMovingChan chan int, completeOrderChan chan ButtonSignal) {
+func (e *Elevator) Run(arrivedAtFloorChan chan int, getMovingChan chan int) {
 	// go funksjonen som skriver til nextDestinationChan
 	// go funksjonen som oppdaterer elevator variablene
 	for{
@@ -142,7 +141,7 @@ func (e *Elevator) Run(arrivedAtFloorChan chan int, getMovingChan chan int, comp
 					Sleep(2*Second)
 					Elev_set_door_open_lamp(0)
 
-					e.removeOrders(completeOrderChan)
+					e.removeOrders()
 
 					if e.moreOrdersInDir() {
 							// e.direction = e.direction
@@ -151,7 +150,6 @@ func (e *Elevator) Run(arrivedAtFloorChan chan int, getMovingChan chan int, comp
 					} else {
 						e.direction = 0
 					}
-
 					if e.orderOnCurrentFloorInDir() {
 						arrivedAtFloorChan <- 1
 						continue						
@@ -172,7 +170,7 @@ func (e *Elevator) Run(arrivedAtFloorChan chan int, getMovingChan chan int, comp
 }	//func
 
 
-func (e *Elevator) UpdateStatus(arrivedAtFloorChan chan int, updateOutChan chan network.ElevatorInfo) {
+func (e *Elevator) UpdateStatus(arrivedAtFloorChan chan int) {
 	for {
 		e.location = Elev_get_floor_sensor_signal()
 		
@@ -182,11 +180,8 @@ func (e *Elevator) UpdateStatus(arrivedAtFloorChan chan int, updateOutChan chan 
 			Printf("----------------------\nI ETASJE %v\n--------------------\n", Elev_get_floor_sensor_signal())
 			//send reachedfloor
 			arrivedAtFloorChan <- 1
-			updateOutChan <- network.ElevatorInfo{e.orderMatrix, e.currentFloor, e.direction}
 			
-		}/* else if e.location == -1 && e.location != e.leaveCheck {
-			// sjekk for å sende update når heisen forlater en etasje
-		}*/
+		}
 		Sleep(50*Millisecond)
 	}
 }
@@ -207,45 +202,41 @@ func (e *Elevator) addOrder(order ButtonSignal) {
 	Elev_set_button_lamp(order)
 }
 
-func (e *Elevator) removeSingleExtOrder(floor int, button int, completeOrderChan chan ButtonSignal) {
-	e.orderMatrix[floor][button] = false
-	Elev_set_button_lamp(ButtonSignal{button, floor, 0}) // lag en lokal "completedOrder" variabel?
-	completedOrderChan <- {ButtonSignal{button, floor, 0}
-}
-
-func (e *Elevator) removeSingleIntOrder(floor int, button int) { //mulig denne er ubrukelig hvis master styrer lys
+func (e *Elevator) removeSingleOrder(floor int, button int) {
 	e.orderMatrix[floor][button] = false
 	Elev_set_button_lamp(ButtonSignal{button, floor, 0})
 }
 
-func (e *Elevator) removeAllOrdersOnFloor(floor int, completeOrderChan chan ButtonSignal) {
-		e.removeSingleExtOrder(floor, BUTTON_CALL_UP, completeOrderChan)
-		e.removeSingleExtOrder(floor, BUTTON_CALL_DOWN, completeOrderChan)
-		e.removeSingleIntOrder(floor, BUTTON_COMMAND)
+func (e *Elevator) removeAllOrdersOnFloor(floor int) {
+	for i := 0; i <= 2; i++ {
+		e.removeSingleOrder(floor, i)
+	}
 }
 
-func (e *Elevator) removeOrdersGoingUp(floor int, completeOrderChan chan ButtonSignal) {
-	e.removeSingleExtOrder(floor, BUTTON_CALL_UP, completeOrderChan)
-	e.removeSingleIntOrder(floor, BUTTON_COMMAND)
+func (e *Elevator) removeOrdersGoingUp(floor int) {
+	e.removeSingleOrder(floor, BUTTON_CALL_UP)
+	e.removeSingleOrder(floor, BUTTON_COMMAND)
 }
 
-func (e *Elevator) removeOrdersGoingDown(floor int, completeOrderChan chan ButtonSignal) {
-	e.removeSingleExtOrder(floor, BUTTON_CALL_DOWN, completeOrderChan)
-	e.removeSingleIntOrder(floor, BUTTON_COMMAND)
+func (e *Elevator) removeOrdersGoingDown(floor int) {
+	e.removeSingleOrder(floor, BUTTON_CALL_DOWN)
+	e.removeSingleOrder(floor, BUTTON_COMMAND)
 }
 
-func (e *Elevator) removeOrders(completeOrderChan chan ButtonSignal) { 
+func (e *Elevator) removeOrders() { 
 	if e.currentFloor == 3 || e.currentFloor == 0 { // lag en egen funksjon for denne delen
-		e.removeAllOrdersOnFloor(e.currentFloor, completeOrderChan) 
+		e.removeAllOrdersOnFloor(e.currentFloor) 
 	} else if e.direction > 0 {
-		e.removeOrdersGoingUp(e.currentFloor, completeOrderChan) // legg til en keep moving kanal inne i denne for å unngå at det henger i orderHandler
+		e.removeOrdersGoingUp(e.currentFloor) // legg til en keep moving kanal inne i denne for å unngå at det henger i orderHandler
 	} else if e.direction < 0 {
-		e.removeOrdersGoingDown(e.currentFloor, completeOrderChan)
+		e.removeOrdersGoingDown(e.currentFloor)
 	} else {
 		if e.currentFloor >= N_FLOORS/2 {
-			e.removeOrdersGoingUp(e.currentFloor, completeOrderChan)
+			e.removeOrdersGoingUp(e.currentFloor)
+			//e.direction = 1
 		} else {
-			e.removeOrdersGoingDown(e.currentFloor, completeOrderChan)
+			e.removeOrdersGoingDown(e.currentFloor)
+			//e.direction = -1
 		}
 	}
 }
