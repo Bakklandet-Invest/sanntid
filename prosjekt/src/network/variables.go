@@ -29,7 +29,7 @@ type Message struct{
 	Addr string
 	Floor int
 	Button int
-	Cost int
+	//Cost int
 	ElevInfo ElevatorInfo
 }
 

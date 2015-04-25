@@ -34,9 +34,30 @@ func selectMaster(lifts map[string]network.ConnectionUDP)string {
 //func masterAlive()bool{
 //}
 
-func main(){
-	network.Init()
-	go writemap()
+func Slave(
+	go ELEVATORRUN
+	go networkHandler
+	
+	updateChan := make(chan Message)
+	exOrderChan := make(chan ButtonSignal)
+	fromMaster := make(chan ButtonSignal)
+	readUDPButtonSig := make(chan ButtonSignal)
+	
+	for{
+		select{
+			case update := <- updateChan
+				network.MessageChan <- update
+			case extOrd := <- extOrderChan
+				network.MessageChan <- extOrd //Få pakket forunftig beskjed her først da, med recieverAddr til MASTER
+			
+		}	
+	}
+}
+
+func networkHandler(){
+//	network.Init()
+//	go writemap()
+	
 
 	for{
 		select{
@@ -66,6 +87,7 @@ func messageHandler(msg network.Message) {
 			}
 		case network.NewOrder:
 			//kanskje skrive ut noe?
+			// KANAL skrive orderen til canalen
 			
 			//cost :=  69 //costfunksjonen inn her
 			
