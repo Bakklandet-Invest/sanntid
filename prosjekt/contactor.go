@@ -9,17 +9,18 @@ import(
 
 var liftsOnline = make(map[string]network.ConnectionUDP)
 var disconnElevChan = make(chan network.ConnectionUDP)
+var myID string = FindElevID()
 
 func writemap() {
 	for {
 		fmt.Println("Size av liftsOnline:",len(liftsOnline))
 		fmt.Println("liftsOnline:",liftsOnline)
-		fmt.Println("Master har ID:",selectMaster(liftsOnline))
+		fmt.Println("Master har ID:",selectMaster(liftsOnline, checkMasterChan))
 		time.Sleep(time.Second*10)
 	}
 }
 
-func selectMaster(lifts map[string]network.ConnectionUDP)string {
+func selectMaster(lifts map[string]network.ConnectionUDP, checkMasterChan chan string)string {
 	master := "-1"
 	for key := range lifts{
 		m, _ := strconv.Atoi(master)
@@ -28,6 +29,7 @@ func selectMaster(lifts map[string]network.ConnectionUDP)string {
 			master = key
 		}
 	}
+	checkMasterChan<-master
 	return master
 }
 
@@ -41,24 +43,28 @@ func selectMaster(lifts map[string]network.ConnectionUDP)string {
 func main(){
 	updateOutChan := make(chan network.Message)
 	updateInChan := make(chan network.Message)//Trenger ikke egen case, messageHandler tar ansvar
-	extOrderChan := make(chan ButtonSignal)
+	checkMasterChan := make(chan string)	
 	newOrderChan := make(chan ButtonSignal)
-	fromMasterChan := make(chan ButtonSignal)//Kanalen som går inn til elev og gir oppdrag
 	completeOrderChan := make(chan ButtonSignal)
+	extOrderChan := make(chan ButtonSignal)
+	fromMasterChan := make(chan ButtonSignal)//Kanalen som går inn til elev og gir oppdrag
 	
 	// Holder orden på master/slave-rollen	
-	terminateChan := make(chan bool)
-	terminatedChan := make(chan bool)
-	checkMasterChan := make(chan bool)	
-	go checkMaster(checkMasterChan<-)
+	//terminateChan := make(chan bool)
+	//terminatedChan := make(chan bool)
+
 	
-	go networkHandler()
-	go ELEVATORRUN(terminateChan, terminatedChan)
-	go Slave()
+	
+	go networkHandler(updateInChan, checkMasterChan, newOrderChan, completeOrderChan)
+	go InitElevator(updateOutChan, updateInChan, checkMasterChan, newOrderChan, completeOrderChan, extOrderChan, fromMasterChan)
+	go Master(updateOutChan, checkMasterChan, newOrderChan, completeOrderChan, extOrderChan, fromMasterChan)
 	
 }
 
-func Slave(){		
+//func checkMaster(checkMasterChan chan string){
+
+
+func Slave(updateOutChan chan network.Message, checkMasterChan chan string, newOrderChan chan ButtonSignal, completeOrderChan chan ButtonSignal, extOrderChan chan ButtonSignal, fromMasterChan chan ButtonSignal){		
 	//go networkHandler()
 	var masterAddr string //evt lagre sin egen slik at meldingene sendes til seg selv
 	// og ikke forsvinner i vente på en master
@@ -68,7 +74,7 @@ func Slave(){
 				if master == myID{
 					terminateChan<-true
 					<-terminatedChan
-					go Master()
+					go Master(updateOutChan, checkMasterChan, newOrderChan, completeOrderChan, extOrderChan, fromMasterChan)
 					return
 				} //PROBLEM UNDER- i init fasen, vil ikke masterADdr eksistere
 				masterAddr = liftsOnline(master)
@@ -82,14 +88,14 @@ func Slave(){
 	
 			case orderButtonSignal := <- newOrderChan:
 				fromMasterChan <- orderButtonSignal
-			case completeOrder := <- completeOrderChan
+			case completeOrder := <- completeOrderChan:
 				complOrdMsg := network.Message{Content: network.CompletedOrder, Addr: <addresse til master>, Floor: extOrdButtonSignal.Floor, Button: extOrdButtonSignal.Button}
 				network.MessageChan <- complOrdMsg
 		}	
 	}
 }
 
-func Master(){
+func Master(updateOutChan chan network.Message, checkMasterChan chan string, newOrderChan chan ButtonSignal, completeOrderChan chan ButtonSignal, extOrderChan chan ButtonSignal, fromMasterChan chan ButtonSignal){
 
 	for{
 		select{
@@ -97,7 +103,7 @@ func Master(){
 				if master != myID{
 					terminateChan<-true
 					<-terminatedChan
-					go Slave()
+					go Slave(updateOutChan, checkMasterChan, newOrderChan, completeOrderChan, extOrderChan, fromMasterChan)
 					return
 				}
 			case update := <- updateOutChan:
@@ -124,6 +130,22 @@ func Master(){
 	}
 }
 
+func FindElevID() string/*int*/ {
+	addrs, _ := net.InterfaceAddrs()
+	for _, address := range addrs {
+        if ipnet, ok := address.(*net.IPNet); ok && !ipnet.IP.IsLoopback() {
+            if ipnet.IP.To4() != nil {
+                IDstr := ipnet.IP.String()
+                IDstr = IDstr[12:]
+                //ID, _ := strconv.Atoi(IDstr)
+                return IDstr//ID
+            }
+        }
+    }else{
+		fmtprint(err)
+		return "69"
+	} 
+}
 
 /*
 func main(){
@@ -134,13 +156,13 @@ func main(){
 	<-kanal
 }*/
 
-func networkHandler(){
+func networkHandler(updateInChan chan network.Message, checkMasterChan chan string, newOrderChan chan ButtonSignal, completeOrderChan chan ButtonSignal){
 	network.Init()
 	go writemap()
 	for{
 		select{
 		case msg := <-network.RecieveChan:
-			messageHandler(network.ParseMessage(msg))
+			messageHandler(network.ParseMessage(msg), updateInChan, checkMasterChan, newOrder, completeOrderChan)
 		case conn := <- disconnElevChan:
 			deleteLift(conn.Addr)
 		}
@@ -150,7 +172,7 @@ func networkHandler(){
 }
 
 //  msg.Addr byttet med id i liftsonline(key)
-func messageHandler(msg network.Message) {
+func messageHandler(msg network.Message, updateInChan chan network.Message, checkMasterChan chan string, newOrderChan chan ButtonSignal, completeOrderChan chan ButtonSignal,) {
 	id := network.FindID(msg.Addr)
 	switch msg.Content{
 		case network.Alive:
@@ -161,6 +183,7 @@ func messageHandler(msg network.Message) {
 				
 				liftsOnline[id] = newConn
 				go connTimer(newConn)
+				selectMaster(liftsOnline, checkMasterChan) //CHECKMASTER
 			}
 		case network.NewOrder:
 			//kanskje skrive ut noe?
@@ -177,6 +200,7 @@ func messageHandler(msg network.Message) {
 			completeOrderChan <- ButtonSignal{Floor: msg.Floor, Button: msg.Button}
 		case network.Info:
 			// LAGRER INFO OM HEISEN M/ TILHØRENDE ID, hvor?
+----------- bruke updateInChan			
 		}		
 }
 
@@ -191,4 +215,5 @@ func connTimer(conn network.ConnectionUDP){
 func deleteLift(addr string){
 	id := network.FindID(addr)
 	delete(liftsOnline, id)
+	selectMaster(liftsOnline, checkMasterChan) //CHECKMASTER
 }
