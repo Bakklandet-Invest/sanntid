@@ -19,15 +19,14 @@ var myID string = findMyID()
 
 func writemap(checkMasterChan chan string) {
 	for {
-		fmt.Println("Size av liftsOnline:",len(liftsOnline))
+		fmt.Printf("%v lifts online, master id: %v\n",len(liftsOnline),selectMaster(liftsOnline, checkMasterChan))
 		fmt.Println("liftsOnline:",liftsOnline)
-		fmt.Println("Master har ID:",selectMaster(liftsOnline, checkMasterChan))
 		time.Sleep(time.Second*10)
 	}
 }
 
 func selectMaster(lifts map[string]network.ConnectionUDP, checkMasterChan chan string)string {
-	master := "-1"
+	master := myID
 	for key := range lifts{
 		m, _ := strconv.Atoi(master)
 		k, _ := strconv.Atoi(key)
@@ -51,7 +50,8 @@ func main(){
 
 	updateOutChan := make(chan network.ElevatorInfo)
 	updateInChan := make(chan network.ElevatorInfo)//Trenger ikke egen case, messageHandler tar ansvar
-	checkMasterChan := make(chan string)	
+	checkMasterChan := make(chan string)
+	//checkMasterChan<-myID	
 	newOrderChan := make(chan ButtonSignal)
 	completeOrderChan := make(chan ButtonSignal)
 	extOrderChan := make(chan ButtonSignal)
@@ -66,6 +66,7 @@ func main(){
 	go networkHandler(updateInChan, checkMasterChan, newOrderChan, completeOrderChan)
 	//go InitElevator(updateOutChan, updateInChan, checkMasterChan, newOrderChan, completeOrderChan, extOrderChan, fromMasterChan)
 	go Master(updateOutChan, checkMasterChan, newOrderChan, completeOrderChan, extOrderChan, fromMasterChan)
+
 	<-hengekanal
 }
 
@@ -75,6 +76,7 @@ func main(){
 func Slave(updateOutChan chan network.ElevatorInfo, checkMasterChan chan string, newOrderChan chan ButtonSignal, completeOrderChan chan ButtonSignal, extOrderChan chan ButtonSignal, fromMasterChan chan ButtonSignal){		
 	//go networkHandler()
 	var masterAddr string //evt lagre sin egen slik at meldingene sendes til seg selv
+	fmt.Println("JEG ER NÅ EN SLAVE")
 	// og ikke forsvinner i vente på en master
 	for{
 		select{
@@ -104,6 +106,7 @@ func Slave(updateOutChan chan network.ElevatorInfo, checkMasterChan chan string,
 }
 
 func Master(updateOutChan chan network.ElevatorInfo, checkMasterChan chan string, newOrderChan chan ButtonSignal, completeOrderChan chan ButtonSignal, extOrderChan chan ButtonSignal, fromMasterChan chan ButtonSignal){
+	fmt.Println("JEG ER NÅ MASTER")
 	masterAddr := liftsOnline[myID].Addr
 	for{
 		select{
