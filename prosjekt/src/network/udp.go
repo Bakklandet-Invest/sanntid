@@ -100,7 +100,7 @@ func transmitServerUDP(lConn, bConn *net.UDPConn, sendCh chan messageUDP) {
 		if msg.recieveAddr == "broadcast" {
 			n, err = lConn.WriteToUDP(msg.data, broadcastAddr)
 		} else {
-			recieveAddr, err := net.ResolveUDPAddr("udp", msg.recieveAddr)
+			recieveAddr, err := net.ResolveUDPAddr("udp", msg.recieveAddr/*+":"+strconv.Itoa(localListenPort)*/)
 			if err != nil {
 				fmt.Printf("Error in transmitServerUDP: ResolveUDPAddr failed\n")
 				panic(err)

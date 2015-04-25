@@ -11,6 +11,9 @@ var sendChan = make(chan messageUDP)
 
 const NotifyInterval = 20*time.Second
 
+//VAR INNI INIT()	
+
+
 func Init(){
 	const localListenPort = 14369
 	const broadcastListenPort = 14370
