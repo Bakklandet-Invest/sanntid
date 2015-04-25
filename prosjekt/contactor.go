@@ -125,6 +125,6 @@ func connTimer(conn network.ConnectionUDP){
 
 //endret slik at den sletter vha idkey, ikke addr key
 func deleteLift(addr string){
-	id := network.FindID(msg.Addr)
+	id := network.FindID(addr)
 	delete(liftsOnline, id)
 }
