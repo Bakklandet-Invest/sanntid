@@ -90,7 +90,7 @@ func InitElevator() *Elevator {
 }
 
 
-func (e *Elevator) OrderHandler(intOrderChan chan ButtonSignal, extOrderChan chan ButtonSignal, getMovingChan chan int) {
+func (e *Elevator) OrderHandler(intOrderChan chan ButtonSignal, extOrderChan chan ButtonSignal, getMovingChan chan int /*, fromMasterChan chan ButtonSignal*/) {
 	// external order, send til master
 	// internal order legg til først i stopplisten 
 	// (kun etter orders som er i etasjer over og i riktig retning)
@@ -99,11 +99,18 @@ func (e *Elevator) OrderHandler(intOrderChan chan ButtonSignal, extOrderChan cha
 	for{
 		Println("starten av OrderHandler løkke")
 		select{
-			case newOrder = <- extOrderChan:
+			case newOrder = <- extOrderChan: // slave() leser direkte fra extOrderChan (fjern)
 				e.addOrder(newOrder)
 				if e.direction == 0 {
 					getMovingChan <- 1
 				}
+				/* SEND MESSAGE TIL MASTER
+			case newOrder = <- fromMasterChan:
+				e.addOrder(newOrder)
+				if e.direction == 0 {
+					getMovingChan <- 1
+				}
+				*/
 			case newOrder = <- intOrderChan:
 				e.addOrder(newOrder)
 				if e.direction == 0 {
@@ -127,10 +134,10 @@ func (e *Elevator) Run(arrivedAtFloorChan chan int, getMovingChan chan int) {
 				// handle obstruction
 			case <- arrivedAtFloorChan:
 						 
-				if e.canCompleteOrder() || !e.moreOrdersInCurrentDir() {
+				if e.canCompleteOrder() || !e.moreOrdersInCurrentDir() { // del opp if - if else
 					e.speed = Elev_set_speed(0)
-					// hvis (e.orderWithCurrentDir (sjekker om orderen i etasjen vil samme vei) (bruk orderWithSameDir og inkluder nåværende etasje) -> behold dir
-					// hvis (!.orderWithCurrent)
+					// hvis (e.moreOrdersInDir() (sjekker om orderen i etasjen vil samme vei) (bruk orderWithSameDir og inkluder nåværende etasje) -> behold dir
+					// hvis (!.moreOrdersInDir())
 					Println("I ORDER ON CURRENT FLOOR: SOVER")
 					Elev_set_door_open_lamp(1)
 					Sleep(2*Second)
@@ -191,7 +198,8 @@ func (e *Elevator) Run(arrivedAtFloorChan chan int, getMovingChan chan int) {
 }	//func
 
 
-func (e *Elevator) UpdateStatus(arrivedAtFloorChan chan int) {
+func (e *Elevator) UpdateStatus(arrivedAtFloorChan chan int/*, updateChan chan network.ElevatorInfo*/) {
+	lastDir = e.direction
 	for {
 		e.location = Elev_get_floor_sensor_signal()
 		
@@ -201,9 +209,16 @@ func (e *Elevator) UpdateStatus(arrivedAtFloorChan chan int) {
 			Printf("----------------------\nI ETASJE %v\n--------------------\n", Elev_get_floor_sensor_signal())
 			//send reachedfloor
 			arrivedAtFloorChan <- 1
-			
+			/* SEND MESSAGE TIL MASTER
+			updateChan <- ElevatorInfo{}
+			*/
+			/* SEND MESSAGE TIL MASTER
+		} else if e.direction != lastDir{
+			// send update
 		}
+		*/
 		Sleep(50*Millisecond)
+		}
 	}
 }
 
@@ -213,27 +228,45 @@ func (e *Elevator) addOrder(order ButtonSignal) {
 	Elev_set_button_lamp(order)
 }
 
-func (e *Elevator) removeOrder(floor int, button int) {
+func (e *Elevator) removeSingleOrder(floor int, button int) {
 	e.orderMatrix[floor][button] = false
 	Elev_set_button_lamp(ButtonSignal{button, floor, 0})
 }
 
 func (e *Elevator) removeAllOrdersOnFloor(floor int) {
 	for i := 0; i <= 2; i++ {
-		e.removeOrder(floor, i)
+		e.removeSingleOrder(floor, i)
 	}
 }
 
 func (e *Elevator) removeOrdersGoingUp(floor int) {
-	e.removeOrder(floor, BUTTON_CALL_UP)
-	e.removeOrder(floor, BUTTON_COMMAND)
+	e.removeSingleOrder(floor, BUTTON_CALL_UP)
+	e.removeSingleOrder(floor, BUTTON_COMMAND)
 }
 
 func (e *Elevator) removeOrdersGoingDown(floor int) {
-	e.removeOrder(floor, BUTTON_CALL_DOWN)
-	e.removeOrder(floor, BUTTON_COMMAND)
+	e.removeSingleOrder(floor, BUTTON_CALL_DOWN)
+	e.removeSingleOrder(floor, BUTTON_COMMAND)
 }
-
+/* BRUK I RUN
+func (e *Elevator) removeOrders() { 
+	if e.currentFloor == 3 || e.currentFloor == 0 { // lag en egen funksjon for denne delen
+		e.removeAllOrdersOnFloor(e.currentFloor) 
+	} else if e.direction > 0 {
+		e.removeOrdersGoingUp(e.currentFloor) // legg til en keep moving kanal inne i denne for å unngå at det henger i orderHandler
+	} else if e.direction < 0 {
+		e.removeOrdersGoingDown(e.currentFloor)
+	} else {
+		if e.currentFloor >= N_FLOORS/2 {
+			e.removeOrdersGoingUp(e.currentFloor)
+			e.direction = 1
+		} else {
+			e.removeOrdersGoingDown(e.currentFloor)
+			e.direction = -1
+		}
+	}
+}
+*/
 func (e *Elevator) getNewDirection(arrivedAtFloorChan chan int) {
 		// return int eller send på channel ? - skriv til e.direction
 	if (e.orderMatrix[e.currentFloor][0] || e.orderMatrix[e.currentFloor][1] || e.orderMatrix[e.currentFloor][2]) {
@@ -325,7 +358,7 @@ func (e *Elevator) orderOnFloor(floor int) bool {
 }
 
 
-func (e *Elevator) orderWithSameDir() bool {
+func (e *Elevator) orderWithSameDir() bool { // bytte navn til f.eks "moreOrdersInDir"
 	if e.direction > 0 {
 		for i := e.currentFloor+1; i <= 3; i++ {
 			if e.orderMatrix[i][0] || e.orderMatrix[i][2] {
