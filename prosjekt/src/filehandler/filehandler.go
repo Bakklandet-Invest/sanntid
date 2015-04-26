@@ -1,7 +1,7 @@
 package filehandler
 
 import(
-	"gob"
+	"encoding/gob"
 	"os"
 	"network"
 )

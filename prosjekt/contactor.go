@@ -39,12 +39,11 @@ func selectMaster(lifts map[string]network.ConnectionUDP, checkMasterChan chan s
 	return master
 }
 
-//func masterAlive()bool{
+
 //}
 /* ---HUSKELISTE
 	ElevInfo må pakkes i ElevatorRun
-	* ConnTimer tar kun inn network.ConnectionUDP, og vet ikke ID'en
-	* -> fikset at den sletter nå
+
 */ /* */
 func main(){
 	hengekanal := make(chan int)
@@ -58,14 +57,14 @@ func main(){
 	extOrderChan := make(chan ButtonSignal)
 	fromMasterChan := make(chan ButtonSignal)//Kanalen som går inn til elev og gir oppdrag
 	
-	//backupChan := make(chan map[string]network.ElevatorInfo)
+	backupChan := make(chan map[string]network.ElevatorInfo)
 	//elevInfoChan := make(chan network.ElevatorInfo)
 	
 	// Holder orden på master/slave-rollen	
 	//terminateChan := make(chan bool)
 	//terminatedChan := make(chan bool)
 
-	go backupHandler()
+	go backupHandler(backupChan)
 	
 	go networkHandler(updateInChan, checkMasterChan, newOrderChan, completeOrderChan)
 	go control.InitElevator(updateOutChan,  checkMasterChan, completeOrderChan, extOrderChan, fromMasterChan)
@@ -190,11 +189,17 @@ func findMyID() string/*int*/ {
 
 func backupHandler(backupChan chan network.ElevatorInfo.Matrix){
 	//filehandler.Init()
+	loadBackupTime := time.Second*10
+	saveBackupTime := time.Second
+	
+	loadTimer = time.NewTimer(loadBackupTime)
+	saveTimer = time.NewTimer(saveBackupTime)
 	for{
 		select{
-		case timer noe, si hvert sekund?: //tar 
+		case <-saveTimer.Timer.C: //tar 
 			filehandler.SaveBackup(liftsOnlineInfo)
-			restart timer!!
+			//restart timer!!
+			saveTimer.Timer.Reset(loadBackupTime)
 		case conn := <- disconnElevChan: //LEGGER inn ordre fra død heis
 			id := network.FindID(conn.Addr)
 			m := matrixCompareOr(liftsOnlineInfo[id].Matrix, liftsOnline[myID])
@@ -202,18 +207,19 @@ func backupHandler(backupChan chan network.ElevatorInfo.Matrix){
 			//________ BURDE KANSKJE FORDELES PÅ NYTT IGJEN???? OG INTERNE ORDRE BURDE IGNORERES
 			delete(liftsOnlineInfo, id)
 			//sletting av  liftsOnline blir gjort i networkHandler
-		case timer noe, si hvert 10 sekund: //SJEKKER EGEN MATRISE MOT BACKUPEN
+		case <-loadTimer.Timer.C: //SJEKKER EGEN MATRISE MOT BACKUPEN
 			backupMap := filehandler.LoadBackup()
 			var backupMatrix network.ElevatorInfo.Matrix = backupMap[myID].Matrix
 			if backupMatrix != liftsOnlineInfo[myID].Matrix{
 				backupMatrix = matrixCompareOr(backupMatrix, liftsOnlineInfo[myID].Matrix
 				backupChan<-backupMatrix
 			}
-			//liftsOnlineInfo[myID].Matrix ------OR--------- backupMatrix
-			restart timer!!
-
+			loadTimer.Timer.Reset(loadBackupTime)
 	}
 }
+
+
+
 
 func matrixCompareOr(m1 Matrix, m2 Matrix) (Matrix){
 	var m3 Matrix
