@@ -14,6 +14,7 @@ import(
 )
 
 var liftsOnline = make(map[string]network.ConnectionUDP)
+var liftsOnlineInfo = make(map[string]network.ElevatorInfo)
 var disconnElevChan = make(chan network.ConnectionUDP)
 var myID string = findMyID()
 
@@ -56,6 +57,9 @@ func main(){
 	completeOrderChan := make(chan ButtonSignal)
 	extOrderChan := make(chan ButtonSignal)
 	fromMasterChan := make(chan ButtonSignal)//Kanalen som går inn til elev og gir oppdrag
+	
+	backupChan := make(chan map[string]network.ElevatorInfo)
+	elevInfoChan := make(chan network.ElevatorInfo)
 	
 	// Holder orden på master/slave-rollen	
 	//terminateChan := make(chan bool)
@@ -236,9 +240,17 @@ func messageHandler(msg network.Message, updateInChan chan network.ElevatorInfo,
 			completeOrderChan <- ButtonSignal{Floor: msg.Floor, Button: msg.Button}
 		case network.Info:
 			// LAGRER INFO OM HEISEN M/ TILHØRENDE ID, hvor?
-// bruke updateInChan			
+			//elevInfoChan<-msg.ElevInfo	//HVA med å bare utføre arbeitet her
+			liftsOnlineInfo[id] = msg.ElevInfo
+			fmt.Println(liftsOnlineInfo)
+// bruke updateInChan	--- endret til elevInfoChan??		
 		}		
 }
+/*
+func elevInfoSaver(elevInfoChan chan network.ElevatorInfo){
+		
+}*/
+
 
 func connTimer(conn network.ConnectionUDP){
 	for{
