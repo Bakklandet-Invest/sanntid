@@ -84,8 +84,8 @@ func InitElevator(updateOutChan chan network.ElevatorInfo, checkMasterChan chan 
 
 	go e.OrderHandler(intOrderChan, fromMasterChan, getMovingChan)
 	go Elev_get_order(intOrderChan, extOrderChan)
-	go e.Run(arrivedAtFloorChan, getMovingChan, completeOrderChan)
-	go e.UpdateStatus(arrivedAtFloorChan, updateOutChan)
+	go e.Run(arrivedAtFloorChan, getMovingChan, completeOrderChan, stopSignalChan, obstuctionChan)
+	go e.UpdateStatus(arrivedAtFloorChan, updateOutChan, stopSignalChan, obstuctionChan)
 	//go e.printInfo()
 	
 	Println("ferdig med init")
@@ -107,6 +107,7 @@ func (e *Elevator) OrderHandler(intOrderChan chan ButtonSignal, fromMasterChan c
 				}
 			case newOrder = <- intOrderChan:
 				e.addOrder(newOrder)
+				Elev_set_button_lamp(newOrder)
 				if e.direction == 0 {
 					getMovingChan <- 1
 				}
@@ -114,7 +115,7 @@ func (e *Elevator) OrderHandler(intOrderChan chan ButtonSignal, fromMasterChan c
 	}
 }
 
-func (e *Elevator) Run(arrivedAtFloorChan chan int, getMovingChan chan int, completeOrderChan chan ButtonSignal) {
+func (e *Elevator) Run(arrivedAtFloorChan chan int, getMovingChan chan int, completeOrderChan chan ButtonSignal, stopSignalChan chan int, obstuctionChan chan int) {
 	for{
 		Println("STARTEN AV RUN")
 		select{
@@ -177,7 +178,7 @@ func (e *Elevator) Run(arrivedAtFloorChan chan int, getMovingChan chan int, comp
 }	//func
 
 
-func (e *Elevator) UpdateStatus(arrivedAtFloorChan chan int, updateOutChan chan network.ElevatorInfo) {
+func (e *Elevator) UpdateStatus(arrivedAtFloorChan chan int, updateOutChan chan network.ElevatorInfo, stopSignalChan chan int, obstuctionChan chan int) {
 	for {
 		e.location = Elev_get_floor_sensor_signal()
 		if Elev_get_stop_signal() {
@@ -197,7 +198,13 @@ func (e *Elevator) UpdateStatus(arrivedAtFloorChan chan int, updateOutChan chan 
 		}/* else if e.location == -1 && e.location != e.leaveCheck {
 			// sjekk for å sende update når heisen forlater en etasje
 		}*/
+		if e.location == -1 && e.speed == 0 {
+			e.speed = Elev_set_speed(300*e.direction)
+		}
+
 		Sleep(50*Millisecond)
+		
+	
 	}
 }
 

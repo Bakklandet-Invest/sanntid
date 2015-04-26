@@ -79,10 +79,13 @@ func InitElevator(updateOutChan chan network.ElevatorInfo, checkMasterChan chan 
 	arrivedAtFloorChan := make(chan int, 1) 
 	getMovingChan := make(chan int, 1)
 	intOrderChan := make(chan ButtonSignal, 1) // brukes i solo
+	stopSignalChan := make(chan int, 1)
+	obstuctionChan := make(chan int, 1)
+
 	go e.OrderHandler(intOrderChan, fromMasterChan, getMovingChan)
 	go Elev_get_order(intOrderChan, extOrderChan)
-	go e.Run(arrivedAtFloorChan, getMovingChan, completeOrderChan)
-	go e.UpdateStatus(arrivedAtFloorChan, updateOutChan)
+	go e.Run(arrivedAtFloorChan, getMovingChan, completeOrderChan, stopSignalChan, obstuctionChan)
+	go e.UpdateStatus(arrivedAtFloorChan, updateOutChan, stopSignalChan, obstuctionChan)
 	//go e.printInfo()
 	
 	Println("ferdig med init")
@@ -97,6 +100,7 @@ func (e *Elevator) OrderHandler(intOrderChan chan ButtonSignal, fromMasterChan c
 		Println("starten av OrderHandler løkke")
 		select{
 			case newOrder = <- fromMasterChan:
+				Println("MOTTATT FRA MASTER")
 				e.addOrder(newOrder)
 				if e.direction == 0 {
 					getMovingChan <- 1
@@ -110,21 +114,21 @@ func (e *Elevator) OrderHandler(intOrderChan chan ButtonSignal, fromMasterChan c
 	}
 }
 
-func (e *Elevator) Run(arrivedAtFloorChan chan int, getMovingChan chan int, completeOrderChan chan ButtonSignal) {
-	// go funksjonen som skriver til nextDestinationChan
-	// go funksjonen som oppdaterer elevator variablene
+func (e *Elevator) Run(arrivedAtFloorChan chan int, getMovingChan chan int, completeOrderChan chan ButtonSignal, stopSignalChan chan int, obstuctionChan chan int) {
 	for{
 		Println("STARTEN AV RUN")
 		select{
-			/*case <- stopSignalChan:
+			case <- stopSignalChan:
 				//e.speed = Elev_set_speed(0)
+				Println("STOOOOOPPPPP!!!!!!!!!!!!!!!!!!!!!!")
 				e.speed = e.stopElevator()
-				Elev_set_stop_lamp(-1)
+				Elev_set_stop_lamp(1)
 				// hva skal skje når stop-knappen trykkes?
-			 */
-			/*case <- obstuctionChan:
-				// handle obstruction 
-			*/
+			 
+			case <- obstuctionChan:
+				Println("OBSTRUCTED!!!!!!!!!!!!!!!!!")
+				Sleep(Second) 
+			
 			case <- arrivedAtFloorChan:
 				if e.canCompleteOrder()  || !e.moreOrdersInDir() {
 					//e.speed = Elev_set_speed(0)
@@ -173,10 +177,15 @@ func (e *Elevator) Run(arrivedAtFloorChan chan int, getMovingChan chan int, comp
 }	//func
 
 
-func (e *Elevator) UpdateStatus(arrivedAtFloorChan chan int, updateOutChan chan network.ElevatorInfo) {
+func (e *Elevator) UpdateStatus(arrivedAtFloorChan chan int, updateOutChan chan network.ElevatorInfo, stopSignalChan chan int, obstuctionChan chan int) {
 	for {
 		e.location = Elev_get_floor_sensor_signal()
-		
+		if Elev_get_stop_signal() {
+			stopSignalChan <- 1
+		}
+		if Elev_get_obstruction_signal() {
+			obstuctionChan <- 1
+		}
 		if e.location != -1  && e.currentFloor != e.location{
 			e.currentFloor = e.location
 			Elev_set_floor_indicator(e.currentFloor) // fiks så den bare lyser når heisen står stille?
@@ -188,11 +197,17 @@ func (e *Elevator) UpdateStatus(arrivedAtFloorChan chan int, updateOutChan chan 
 		}/* else if e.location == -1 && e.location != e.leaveCheck {
 			// sjekk for å sende update når heisen forlater en etasje
 		}*/
+		if e.location == -1 && e.speed == 0 {
+			e.speed = Elev_set_speed(300*e.direction)
+		}
+
 		Sleep(50*Millisecond)
+		
+	
 	}
 }
 
-func (e *Elevator) stopElevator () int {
+func (e *Elevator) stopElevator() int {
 	if e.speed == 0 {
 		return 0
 	} else {
@@ -203,14 +218,22 @@ func (e *Elevator) stopElevator () int {
 	return 0
 }
 
+/*-------------------------------------------------------------------------------------------*/
+
+
+
+/*--------------------------- ADD AND REMOVE ORDER FUNCTIONS --------------------------------*/
+
 func (e *Elevator) addOrder(order ButtonSignal) {
 	e.orderMatrix[order.Floor][order.Button] = true
-	Elev_set_button_lamp(order)
+	if ButtonSignal.Button == BUTTON_COMMAND {
+		Elev_set_button_lamp(ButtonSignal)
+	}
 }
 
 func (e *Elevator) removeSingleExtOrder(floor int, button int, completeOrderChan chan ButtonSignal) {
 	e.orderMatrix[floor][button] = false
-	Elev_set_button_lamp(ButtonSignal{button, floor, 0}) // lag en lokal "completedOrder" variabel?
+ 														// lag en lokal "completedOrder" variabel?
 	completeOrderChan <- ButtonSignal{button, floor, 0}
 }
 
@@ -251,8 +274,12 @@ func (e *Elevator) removeOrders(completeOrderChan chan ButtonSignal) {
 	}
 }
 
+/*-------------------------------------------------------------------------------------------*/
+
+
+/*---------------------------- ELEVATOR MOVEMENT FUNCTIONS ----------------------------------*/
+
 func (e *Elevator) getNewDirection(arrivedAtFloorChan chan int) {
-		// return int eller send på channel ? - skriv til e.direction
 	if e.orderOnFloor(e.currentFloor) {
 		if e.orderMatrix[e.currentFloor][0] && e.orderMatrix[e.currentFloor][1] {
 			if e.currentFloor >= N_FLOORS/2 {
@@ -351,24 +378,6 @@ func (e *Elevator) orderInOtherDir() bool { // returnerer true hvis heisen skal 
 	return false
 }
 
-func (e *Elevator) orderInCurrentDir() bool {
-	if e.direction > 0 {
-		for i := e.currentFloor+1; i <= 3; i++ {
-			if e.orderOnFloor(i) {
-				return true
-			}
-		}	
-	} else if e.direction < 0 {
-		for i := e.currentFloor-1; i >= 0; i-- {
-			if e.orderOnFloor(i)  {
-				return true
-			}
-		}
-	}
-	return false
-}
-
-
 
 func (e *Elevator) orderOnFloor(floor int) bool {	
 	if (e.orderMatrix[floor][0] || e.orderMatrix[floor][1] || e.orderMatrix[floor][2]) {
@@ -409,7 +418,7 @@ func (e *Elevator) moreOrdersInDir() bool {
 
 
 
-func (e *Elevator) canCompleteOrder() bool {
+func (e *Elevator) canCompleteOrder() bool { // sjekk om alle if statements trengs
 	Println("SJEKKER OM ORDRE KAN GJENNOMFØRES")
 	if e.direction == 0 {
 		return true	
@@ -428,6 +437,7 @@ func (e *Elevator) canCompleteOrder() bool {
 }
 
 	
+	/* PRINT VARIABLES */
 
 func (e *Elevator) printInfo() {
 	for {

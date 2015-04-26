@@ -141,6 +141,7 @@ func Elev_get_order(intOrderChan chan ButtonSignal, extOrderChan chan ButtonSign
 			if ( Elev_get_button_signal( BUTTON_COMMAND, i ) == 1 ) {
 				buttonSig.Floor =  i
 				buttonSig.Button = BUTTON_COMMAND
+				buttonSig.Light = 1
 				intOrderChan <- buttonSig
 			}
 		}
