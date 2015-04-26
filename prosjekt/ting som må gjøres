@@ -30,31 +30,94 @@ lag en funksjon cost
 
 		- kall funksjonen complexCost
 			- complexCost iterer gjennom ordermatrix FRA currentfloor og i retningen heisen har TIL order.Floor i motsatt retning. bruk en ekstra variabel for å ta med casen der den vil kunne motta flere ordere som vil bli lagt til mellom nåværende ordre og orderen som skal legges til.
+			- evt implementer at heiser som får flere ordre i retningen de beveger seg, og har ordre i andre retning, sender de ut til master igjen.
 
-			 
 
-func simpleCost(ElevInfo ElevatorInfo, Order ButtonSignal) int {
+
+func simpleCost(ElevInfo ElevatorInfo, order ButtonSignal) int {
+	return int(math.Abs(float64(ElevInfo.Floor - order.Floor)))
+}
+
+func complexCost() int { // får bare inn ordere som er i retning, men motsatt rettet, eller "bak" heisen
 	cost := 0
-	if ElevInfo.direction == 0 { //har den dir = 0 har den ingen ordere i kø
-		cost = int(math.Abs(float64(ElevInfo.Floor - Order.Floor))) 
-		return cost
-	} else if ElevInfo.Dir > 0 && Order.Floor > ElevInfo.Floor && (Order.Button != CALL_ORDER_DOWN || Order.Floor == 3) { 
-		for i := ElevInfo.Floor+1
+	betweenOrders := false
+	if elev.direction > 0 {
+		if elev.floor < order.floor { // orderen vil ned
+			for i := 3; i > elev.floor; i-- {
+				if !orderOnFloor() && !betweenOrders {
+					continue
+				} else {
+					if elev.orderMatrix[i][0] {
+						cost++
+					}
+					if elev.orderMatrix[i][1] && i < order.floor { // tar bare med orderene ned som heisen stopper på før orderen
+						cost++
+					}
+					if elev.orderMatrix[i][2] && !(elev.orderMatrix[i][0] || elev.orderMatrix[i][1]) {
+						cost++
+					}
+					betweenOrders = true
+				}	
+				cost++
+			}
 
+		} else { // orderen ligger "bak" heisen ---- skal ikke legge til andre ordre i samme retning som er mellom heisen og ordre, eller etasjer den ikke skal passere (alt annet)
+			for i := 0; i <= 3; i++ {
+				if !orderOnFloor() && (!betweenOrders || !isOrdersAbove()) {
+					continue
+				} else {
+					if elev.orderMatrix[i][0] && (i >= elev.currentFloor && i < order.floor) { // tar bare med orderene ned som heisen stopper på før orderen
+						cost++
+					}
+					if elev.orderMatrix[i][1] {
+						cost++
+					}
+					if elev.orderMatrix[i][2] && !(elev.orderMatrix[i][0] || elev.orderMatrix[i][1]) {
+						cost++
+					}
+					betweenOrders = true
+				}	
+				cost++
+			}
+		}
+	} else { //elev.direction < 0
+		if elev.floor > order.floor { // orderen vil opp
+			for i := 3; i < elev.floor; i-- {
+				if !orderOnFloor() && !betweenOrders {
+					continue
+				} else {
+					if elev.orderMatrix[i][0] && i < order.floor { // tar bare med orderene opp som heisen stopper på før orderen
+						cost++
+					}
+					if elev.orderMatrix[i][1] {
+						cost++
+					}
+					if elev.orderMatrix[i][2] && !(elev.orderMatrix[i][0] || elev.orderMatrix[i][1]) {
+						cost++
+					}
+				}
+				cost++
+			}
+		} else { // orderen ligger "bak" heisen ---- skal ikke legge til andre ordre i samme retning som er mellom heisen og ordre, eller etasjer den ikke skal passere (alt annet)
+			for i := 0; i <= 3; i++ {
+				if !orderOnFloor() && (!betweenOrders || !isOrdersBelow()) {
+					continue
+				} else {
+					if elev.orderMatrix[i][0] {
+						cost++
+					}
+					if elev.orderMatrix[i][1] && (i >= elev.currentFloor && i < order.floor) { // tar bare med orderene ned som heisen stopper på før orderen
+						cost++
+					}
+					if elev.orderMatrix[i][2] && !(elev.orderMatrix[i][0] || elev.orderMatrix[i][1]) {
+						cost++
+					}
+					betweenOrders = true
+				}	
+				cost++
+			}
+		}
 	}
 
 }
-
-
-
-
-
-ButtonSignal{button, floor, light}
-
-
-
-
-
-
-
 
