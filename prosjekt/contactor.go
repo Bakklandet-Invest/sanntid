@@ -11,6 +11,7 @@ import(
 	"net"
 	."control"
 	."driver"
+	"filehandler"
 )
 
 var liftsOnline = make(map[string]network.ConnectionUDP)
@@ -57,7 +58,7 @@ func main(){
 	extOrderChan := make(chan ButtonSignal)
 	fromMasterChan := make(chan ButtonSignal)//Kanalen som går inn til elev og gir oppdrag
 	
-	backupChan := make(chan map[string]network.ElevatorInfo)
+	backupChan := make(chan /*map[string]*/Matrix)//network.ElevatorInfo)
 	//elevInfoChan := make(chan network.ElevatorInfo)
 	
 	// Holder orden på master/slave-rollen	
@@ -67,7 +68,7 @@ func main(){
 	go backupHandler(backupChan)
 	
 	go networkHandler(updateInChan, checkMasterChan, newOrderChan, completeOrderChan)
-	go control.InitElevator(updateOutChan,  checkMasterChan, completeOrderChan, extOrderChan, fromMasterChan)
+	go InitElevator(updateOutChan,  checkMasterChan, completeOrderChan, extOrderChan, fromMasterChan)
 	go Master(updateOutChan, checkMasterChan, newOrderChan, completeOrderChan, extOrderChan, fromMasterChan)
 
 	<-hengekanal
@@ -187,34 +188,35 @@ func findMyID() string/*int*/ {
 	return "69"
 }
 
-func backupHandler(backupChan chan network.ElevatorInfo.Matrix){
+func backupHandler(backupChan chan Matrix/*network.ElevatorInfo.Matrix*/ ){
 	//filehandler.Init()
 	loadBackupTime := time.Second*10
 	saveBackupTime := time.Second
 	
-	loadTimer = time.NewTimer(loadBackupTime)
-	saveTimer = time.NewTimer(saveBackupTime)
+	loadTimer := time.NewTimer(loadBackupTime)
+	saveTimer := time.NewTimer(saveBackupTime)
 	for{
 		select{
-		case <-saveTimer.Timer.C: //tar 
+		case <-saveTimer.C: //tar 
 			filehandler.SaveBackup(liftsOnlineInfo)
 			//restart timer!!
-			saveTimer.Timer.Reset(loadBackupTime)
+			saveTimer.Reset(loadBackupTime)
 		case conn := <- disconnElevChan: //LEGGER inn ordre fra død heis
 			id := network.FindID(conn.Addr)
-			m := matrixCompareOr(liftsOnlineInfo[id].Matrix, liftsOnline[myID])
+			m := matrixCompareOr(liftsOnlineInfo[id].Matrix, liftsOnlineInfo[myID].Matrix)
 			backupChan<-m //Sender OR'et matrise til elevator.
 			//________ BURDE KANSKJE FORDELES PÅ NYTT IGJEN???? OG INTERNE ORDRE BURDE IGNORERES
 			delete(liftsOnlineInfo, id)
 			//sletting av  liftsOnline blir gjort i networkHandler
-		case <-loadTimer.Timer.C: //SJEKKER EGEN MATRISE MOT BACKUPEN
+		case <-loadTimer.C: //SJEKKER EGEN MATRISE MOT BACKUPEN
 			backupMap := filehandler.LoadBackup()
-			var backupMatrix network.ElevatorInfo.Matrix = backupMap[myID].Matrix
+			var backupMatrix /*(network.ElevatorInfo).*/Matrix = backupMap[myID].Matrix
 			if backupMatrix != liftsOnlineInfo[myID].Matrix{
-				backupMatrix = matrixCompareOr(backupMatrix, liftsOnlineInfo[myID].Matrix
+				backupMatrix = matrixCompareOr(backupMatrix, liftsOnlineInfo[myID].Matrix)
 				backupChan<-backupMatrix
 			}
-			loadTimer.Timer.Reset(loadBackupTime)
+			loadTimer.Reset(loadBackupTime)
+		}
 	}
 }
 

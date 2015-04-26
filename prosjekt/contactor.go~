@@ -9,11 +9,13 @@ import(
 	"fmt"
 	"strconv"
 	"net"
-	"control"
+	."control"
 	."driver"
+	"filehandler"
 )
 
 var liftsOnline = make(map[string]network.ConnectionUDP)
+var liftsOnlineInfo = make(map[string]network.ElevatorInfo)
 var disconnElevChan = make(chan network.ConnectionUDP)
 var myID string = findMyID()
 
@@ -38,12 +40,11 @@ func selectMaster(lifts map[string]network.ConnectionUDP, checkMasterChan chan s
 	return master
 }
 
-//func masterAlive()bool{
+
 //}
 /* ---HUSKELISTE
 	ElevInfo må pakkes i ElevatorRun
-	* ConnTimer tar kun inn network.ConnectionUDP, og vet ikke ID'en
-	* -> fikset at den sletter nå
+
 */ /* */
 func main(){
 	hengekanal := make(chan int)
@@ -57,14 +58,17 @@ func main(){
 	extOrderChan := make(chan ButtonSignal)
 	fromMasterChan := make(chan ButtonSignal)//Kanalen som går inn til elev og gir oppdrag
 	
+	backupChan := make(chan /*map[string]*/Matrix)//network.ElevatorInfo)
+	//elevInfoChan := make(chan network.ElevatorInfo)
+	
 	// Holder orden på master/slave-rollen	
 	//terminateChan := make(chan bool)
 	//terminatedChan := make(chan bool)
 
-	
+	go backupHandler(backupChan)
 	
 	go networkHandler(updateInChan, checkMasterChan, newOrderChan, completeOrderChan)
-	go control.InitElevator(updateOutChan,  checkMasterChan, completeOrderChan, extOrderChan, fromMasterChan)
+	go InitElevator(updateOutChan,  checkMasterChan, completeOrderChan, extOrderChan, fromMasterChan)
 	go Master(updateOutChan, checkMasterChan, newOrderChan, completeOrderChan, extOrderChan, fromMasterChan)
 
 	<-hengekanal
@@ -135,13 +139,13 @@ func Master(updateOutChan chan network.ElevatorInfo, checkMasterChan chan string
 
 				
 				if i == 0{
-					heisID == "153"
+					heisID = "153"
 					i++
 				}else if i == 1{
-					 heisID == "157"
+					 heisID = "157"
 					i++
 				}else if i == 2{
-					heisID == "145"
+					heisID = "145"
 					i = 0
 				}
 				if heisID == myID{
@@ -152,6 +156,7 @@ func Master(updateOutChan chan network.ElevatorInfo, checkMasterChan chan string
 					network.MessageChan <- newOrderMsg
 				}
 			case extOrdButtonSignal := <- extOrderChan:
+				//---------- LEGGE TIL I UNCOMPLETE ORDERS, HVIS IKKE FÅTT SLETTET VHA completeOrderChan innen gitt tid (si 10 sek), ta ordren og legg inn i interne ordre matrisen
 				
 				fmt.Println("Master mottatt fra extOrderChan")
 				//extOrdMsg := network.Message{Content: network.NewOrder, Addr: masterAddr, Floor: extOrdButtonSignal.Floor, Button: extOrdButtonSignal.Button}
@@ -159,7 +164,7 @@ func Master(updateOutChan chan network.ElevatorInfo, checkMasterChan chan string
 				//network.MessageChan <- extOrdMsg //Få pakket forunftig beskjed her først da, med recieverAddr til MASTER
 				newOrderChan <- extOrdButtonSignal
 			
-			case completeOrder := <- completeOrderChan:
+			case completeOrder := <- completeOrderChan: //Type ButtonSignal
 				// slette fra uncompleteOrders (PS; SYNKE uncompleteOrders til alle for backup?) (no orders lost)
 				_ = completeOrder
 		}
@@ -183,14 +188,52 @@ func findMyID() string/*int*/ {
 	return "69"
 }
 
-/*
-func main(){
-	var kanal = make(chan int)
+func backupHandler(backupChan chan Matrix/*network.ElevatorInfo.Matrix*/ ){
+	//filehandler.Init()
+	loadBackupTime := time.Second*10
+	saveBackupTime := time.Second
 	
-	go networkHandler()
-	
-	<-kanal
-}*/
+	loadTimer := time.NewTimer(loadBackupTime)
+	saveTimer := time.NewTimer(saveBackupTime)
+	for{
+		select{
+		case <-saveTimer.C: //tar 
+			filehandler.SaveBackup(liftsOnlineInfo)
+			//restart timer!!
+			saveTimer.Timer.Reset(loadBackupTime)
+		case conn := <- disconnElevChan: //LEGGER inn ordre fra død heis
+			id := network.FindID(conn.Addr)
+			m := matrixCompareOr(liftsOnlineInfo[id].Matrix, liftsOnlineInfo[myID].Matrix)
+			backupChan<-m //Sender OR'et matrise til elevator.
+			//________ BURDE KANSKJE FORDELES PÅ NYTT IGJEN???? OG INTERNE ORDRE BURDE IGNORERES
+			delete(liftsOnlineInfo, id)
+			//sletting av  liftsOnline blir gjort i networkHandler
+		case <-loadTimer.Timer.C: //SJEKKER EGEN MATRISE MOT BACKUPEN
+			backupMap := filehandler.LoadBackup()
+			var backupMatrix /*(network.ElevatorInfo).*/Matrix = backupMap[myID].Matrix
+			if backupMatrix != liftsOnlineInfo[myID].Matrix{
+				backupMatrix = matrixCompareOr(backupMatrix, liftsOnlineInfo[myID].Matrix)
+				backupChan<-backupMatrix
+			}
+			loadTimer.Timer.Reset(loadBackupTime)
+		}
+	}
+}
+
+
+
+
+func matrixCompareOr(m1 Matrix, m2 Matrix) (Matrix){
+	var m3 Matrix
+	for i := 0; i < network.NumFloors; i++ {
+		for j := 0; j < network.NumButtons; j++{
+			if m1[i][j] == true || m2[i][j] == true{
+				m3[i][j] = true
+			}
+		}
+	}
+	return m3
+}
 
 func networkHandler(updateInChan chan network.ElevatorInfo, checkMasterChan chan string, newOrderChan chan ButtonSignal, completeOrderChan chan ButtonSignal){
 	network.Init()
@@ -236,9 +279,17 @@ func messageHandler(msg network.Message, updateInChan chan network.ElevatorInfo,
 			completeOrderChan <- ButtonSignal{Floor: msg.Floor, Button: msg.Button}
 		case network.Info:
 			// LAGRER INFO OM HEISEN M/ TILHØRENDE ID, hvor?
-// bruke updateInChan			
+			//elevInfoChan<-msg.ElevInfo	//HVA med å bare utføre arbeitet her
+			liftsOnlineInfo[id] = msg.ElevInfo
+			fmt.Println(liftsOnlineInfo)
+// bruke updateInChan	--- endret til elevInfoChan??		
 		}		
 }
+/*
+func elevInfoSaver(elevInfoChan chan network.ElevatorInfo){
+		
+}*/
+
 
 func connTimer(conn network.ConnectionUDP){
 	for{
