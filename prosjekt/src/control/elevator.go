@@ -1,7 +1,6 @@
 package control
 
 import (
-	//"llist"
 	"strconv"
 	"net"
 	."driver"
@@ -14,43 +13,20 @@ import (
 type Matrix [4][3]bool
 
 type Elevator struct {
-	id int
 	orderMatrix Matrix
 	direction int
 	currentFloor int
 	location int
 	speed int
 
-	//leaveCheck int
-	
-
-	
 }
 
-func FindElevID() int {
-	addrs, _ := net.InterfaceAddrs()
-	for _, address := range addrs {
-        if ipnet, ok := address.(*net.IPNet); ok && !ipnet.IP.IsLoopback() {
-            if ipnet.IP.To4() != nil {
-                IDstr := ipnet.IP.String()
-                IDstr = IDstr[12:]
-                ID, _ := strconv.Atoi(IDstr)
-                return ID
-            }
-        }
-    }
-    return 0
-}
 
 func InitElevator(updateOutChan chan network.ElevatorInfo, checkMasterChan chan string, completeOrderChan chan ButtonSignal, extOrderChan chan ButtonSignal, fromMasterChan chan ButtonSignal) *Elevator {
 
-	if Elev_init() != 1 {
-		Println("Could not initialize elevator")
-	}
-	
-	e := new(Elevator)
-	e.id = FindElevID()
+	Elev_init()
 
+	e := new(Elevator)
 	
 	if Elev_get_floor_sensor_signal() == -1 {
 		e.speed = Elev_set_speed(-300)
@@ -71,14 +47,13 @@ func InitElevator(updateOutChan chan network.ElevatorInfo, checkMasterChan chan 
 	fromMasterChan := make(chan ButtonSignal)
 	*/
 
-	//
 	//extOrderChan := make(chan ButtonSignal, 1) // brukes i solo
 	
 
 	/* CHANALS SOM ER INTERNE */
 	arrivedAtFloorChan := make(chan int, 1) 
 	getMovingChan := make(chan int, 1)
-	intOrderChan := make(chan ButtonSignal, 1) // brukes i solo
+	intOrderChan := make(chan ButtonSignal, 1)
 	stopSignalChan := make(chan int, 1)
 	obstuctionChan := make(chan int, 1)
 
@@ -86,21 +61,17 @@ func InitElevator(updateOutChan chan network.ElevatorInfo, checkMasterChan chan 
 	go Elev_get_order(intOrderChan, extOrderChan)
 	go e.Run(arrivedAtFloorChan, getMovingChan, completeOrderChan, stopSignalChan, obstuctionChan)
 	go e.UpdateStatus(arrivedAtFloorChan, updateOutChan, stopSignalChan, obstuctionChan)
-	//go e.printInfo()
+
 	
-	Println("ferdig med init")
 	return e
 }
 
 
 func (e *Elevator) OrderHandler(intOrderChan chan ButtonSignal, fromMasterChan chan ButtonSignal, getMovingChan chan int) {
-	Println("orderhandler")
 	var newOrder ButtonSignal
 	for{
-		Println("starten av OrderHandler løkke")
 		select{
 			case newOrder = <- fromMasterChan:
-				Println("MOTTATT FRA MASTER")
 				e.addOrder(newOrder)
 				if e.direction == 0 {
 					getMovingChan <- 1
@@ -124,6 +95,8 @@ func (e *Elevator) Run(arrivedAtFloorChan chan int, getMovingChan chan int, comp
 				Println("STOOOOOPPPPP!!!!!!!!!!!!!!!!!!!!!!")
 				e.speed = e.stopElevator()
 				Elev_set_stop_lamp(1)
+				Sleep(3*Second)
+				elev_set_stop_lamp(0)
 				// hva skal skje når stop-knappen trykkes?
 			 
 			case <- obstuctionChan:
@@ -195,9 +168,7 @@ func (e *Elevator) UpdateStatus(arrivedAtFloorChan chan int, updateOutChan chan 
 			arrivedAtFloorChan <- 1
 			updateOutChan <- network.ElevatorInfo{e.orderMatrix, e.currentFloor, e.direction}
 			
-		}/* else if e.location == -1 && e.location != e.leaveCheck {
-			// sjekk for å sende update når heisen forlater en etasje
-		}*/
+		}
 		if e.location == -1 && e.speed == 0 {
 			e.speed = Elev_set_speed(300*e.direction)
 		}
@@ -231,11 +202,10 @@ func (e *Elevator) addOrder(order ButtonSignal) {
 
 func (e *Elevator) removeSingleExtOrder(floor int, button int, completeOrderChan chan ButtonSignal) {
 	e.orderMatrix[floor][button] = false
- 														// lag en lokal "completedOrder" variabel?
 	completeOrderChan <- ButtonSignal{button, floor, 0}
 }
 
-func (e *Elevator) removeSingleIntOrder(floor int, button int) { //mulig denne er ubrukelig hvis master styrer lys
+func (e *Elevator) removeSingleIntOrder(floor int, button int) { 
 	e.orderMatrix[floor][button] = false
 	Elev_set_button_lamp(ButtonSignal{button, floor, 0})
 }
@@ -257,10 +227,10 @@ func (e *Elevator) removeOrdersGoingDown(floor int, completeOrderChan chan Butto
 }
 
 func (e *Elevator) removeOrders(completeOrderChan chan ButtonSignal) { 
-	if e.currentFloor == 3 || e.currentFloor == 0 { // lag en egen funksjon for denne delen
+	if e.currentFloor == 3 || e.currentFloor == 0 { 
 		e.removeAllOrdersOnFloor(e.currentFloor, completeOrderChan) 
 	} else if e.direction > 0 {
-		e.removeOrdersGoingUp(e.currentFloor, completeOrderChan) // legg til en keep moving kanal inne i denne for å unngå at det henger i orderHandler
+		e.removeOrdersGoingUp(e.currentFloor, completeOrderChan) 
 	} else if e.direction < 0 {
 		e.removeOrdersGoingDown(e.currentFloor, completeOrderChan)
 	} else {
@@ -416,7 +386,7 @@ func (e *Elevator) moreOrdersInDir() bool {
 
 
 
-func (e *Elevator) canCompleteOrder() bool { // sjekk om alle if statements trengs
+func (e *Elevator) canCompleteOrder() bool { 
 	Println("SJEKKER OM ORDRE KAN GJENNOMFØRES")
 	if e.direction == 0 {
 		return true	
@@ -433,25 +403,3 @@ func (e *Elevator) canCompleteOrder() bool { // sjekk om alle if statements tren
 		return false
 	}
 }
-
-	
-	/* PRINT VARIABLES */
-
-func (e *Elevator) printInfo() {
-	for {
-		Printf("RETNING: %v \n", e.direction)
-		Printf("CURRENTFLOOR: %v \n", e.currentFloor)
-		Printf("LOCATION: %v \n", e.location)
-		Printf("ORDERMATRIX\n\topp    ned    intern\n")
-		Printf("3.\t")
-		Println(e.orderMatrix[3])
-		Printf("2.\t")
-		Println(e.orderMatrix[2])
-		Printf("1.\t")
-		Println(e.orderMatrix[1])
-		Printf("0.\t")
-		Println(e.orderMatrix[0])
-		Sleep(2*Second)
-	}
-}
-

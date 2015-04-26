@@ -99,17 +99,11 @@ func Elev_get_button_signal(button int, floor int) int {
 		return 0
 	}
 }
-/*
-func (sig *ButtonSignal) ClearPrevButtonSig() {
-	time.Sleep(time.Second)
-	sig.Floor = -2
-}
-*/
 
 func Elev_get_order(intOrderChan chan ButtonSignal, extOrderChan chan ButtonSignal) {
 
 	var buttonSig ButtonSignal
-	var lastPress ButtonSignal
+	//var lastPress ButtonSignal
 
 	//var prevButtonSig ButtonSignal 
 	//prevButtonSig.Floor = -2  // for å unngå at samme ordere sendes mange ganger på kort tid
@@ -120,20 +114,18 @@ func Elev_get_order(intOrderChan chan ButtonSignal, extOrderChan chan ButtonSign
 				buttonSig.Floor =  i
 				buttonSig.Button = BUTTON_CALL_UP
 				buttonSig.Light = 1
-				if buttonSig != lastPress {
-					Println("Skriver fra elev_get_order( UP )")
+				//if buttonSig != lastPress {
 					extOrderChan <- buttonSig
-				}
+				//}
 			} else if (Elev_get_button_signal(BUTTON_CALL_DOWN, i+1) == 1) {
 				buttonSig.Floor =  i+1
 				buttonSig.Button = BUTTON_CALL_DOWN
 				buttonSig.Light = 1
-				if buttonSig != lastPress {
-					Println("Skriver fra elev_get_order( DOWN )")
+				//if buttonSig != lastPress {
 					extOrderChan <- buttonSig
-				}
+				//}
 			} 
-			lastPress = buttonSig
+			//lastPress = buttonSig
 		}
 
 		for i := 0; i < 4; i++ {
@@ -146,7 +138,6 @@ func Elev_get_order(intOrderChan chan ButtonSignal, extOrderChan chan ButtonSign
 			}
 		}
 		Sleep(30*Millisecond)
-	//go prevButtonSig.ClearPrevButtonSig()
 	}
 }
 
