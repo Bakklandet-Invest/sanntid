@@ -9,7 +9,7 @@ import(
 	"fmt"
 	"strconv"
 	"net"
-	"control"
+	."control"
 	."driver"
 )
 
@@ -65,7 +65,7 @@ func main(){
 	//terminateChan := make(chan bool)
 	//terminatedChan := make(chan bool)
 
-	
+	go backupHandler()
 	
 	go networkHandler(updateInChan, checkMasterChan, newOrderChan, completeOrderChan)
 	go control.InitElevator(updateOutChan,  checkMasterChan, completeOrderChan, extOrderChan, fromMasterChan)
@@ -156,6 +156,7 @@ func Master(updateOutChan chan network.ElevatorInfo, checkMasterChan chan string
 					network.MessageChan <- newOrderMsg
 				}
 			case extOrdButtonSignal := <- extOrderChan:
+				//---------- LEGGE TIL I UNCOMPLETE ORDERS, HVIS IKKE FÅTT SLETTET VHA completeOrderChan innen gitt tid (si 10 sek), ta ordren og legg inn i interne ordre matrisen
 				
 				fmt.Println("Master mottatt fra extOrderChan")
 				//extOrdMsg := network.Message{Content: network.NewOrder, Addr: masterAddr, Floor: extOrdButtonSignal.Floor, Button: extOrdButtonSignal.Button}
@@ -163,7 +164,7 @@ func Master(updateOutChan chan network.ElevatorInfo, checkMasterChan chan string
 				//network.MessageChan <- extOrdMsg //Få pakket forunftig beskjed her først da, med recieverAddr til MASTER
 				newOrderChan <- extOrdButtonSignal
 			
-			case completeOrder := <- completeOrderChan:
+			case completeOrder := <- completeOrderChan: //Type ButtonSignal
 				// slette fra uncompleteOrders (PS; SYNKE uncompleteOrders til alle for backup?) (no orders lost)
 				_ = completeOrder
 		}
@@ -187,14 +188,44 @@ func findMyID() string/*int*/ {
 	return "69"
 }
 
-/*
-func main(){
-	var kanal = make(chan int)
-	
-	go networkHandler()
-	
-	<-kanal
-}*/
+func backupHandler(backupChan chan network.ElevatorInfo.Matrix){
+	//filehandler.Init()
+	for{
+		select{
+		case timer noe, si hvert sekund?: //tar 
+			filehandler.SaveBackup(liftsOnlineInfo)
+			restart timer!!
+		case conn := <- disconnElevChan: //LEGGER inn ordre fra død heis
+			id := network.FindID(conn.Addr)
+			m := matrixCompareOr(liftsOnlineInfo[id].Matrix, liftsOnline[myID])
+			backupChan<-m //Sender OR'et matrise til elevator.
+			//________ BURDE KANSKJE FORDELES PÅ NYTT IGJEN???? OG INTERNE ORDRE BURDE IGNORERES
+			delete(liftsOnlineInfo, id)
+			//sletting av  liftsOnline blir gjort i networkHandler
+		case timer noe, si hvert 10 sekund: //SJEKKER EGEN MATRISE MOT BACKUPEN
+			backupMap := filehandler.LoadBackup()
+			var backupMatrix network.ElevatorInfo.Matrix = backupMap[myID].Matrix
+			if backupMatrix != liftsOnlineInfo[myID].Matrix{
+				backupMatrix = matrixCompareOr(backupMatrix, liftsOnlineInfo[myID].Matrix
+				backupChan<-backupMatrix
+			}
+			//liftsOnlineInfo[myID].Matrix ------OR--------- backupMatrix
+			restart timer!!
+
+	}
+}
+
+func matrixCompareOr(m1 Matrix, m2 Matrix) (Matrix){
+	var m3 Matrix
+	for i := 0; i < network.NumFloors; i++ {
+		for j := 0; j < network.NumButtons; j++{
+			if m1[i][j] == true || m2[i][j] == true{
+				m3[i][j] = true
+			}
+		}
+	}
+	return m3
+}
 
 func networkHandler(updateInChan chan network.ElevatorInfo, checkMasterChan chan string, newOrderChan chan ButtonSignal, completeOrderChan chan ButtonSignal){
 	network.Init()
