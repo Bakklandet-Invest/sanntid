@@ -112,8 +112,6 @@ func (e *Elevator) OrderHandler(intOrderChan chan ButtonSignal, fromMasterChan c
 }
 
 func (e *Elevator) Run(arrivedAtFloorChan chan int, getMovingChan chan int, completeOrderChan chan ButtonSignal) {
-	// go funksjonen som skriver til nextDestinationChan
-	// go funksjonen som oppdaterer elevator variablene
 	for{
 		Println("STARTEN AV RUN")
 		select{
@@ -193,7 +191,7 @@ func (e *Elevator) UpdateStatus(arrivedAtFloorChan chan int, updateOutChan chan 
 	}
 }
 
-func (e *Elevator) stopElevator () int {
+func (e *Elevator) stopElevator() int {
 	if e.speed == 0 {
 		return 0
 	} else {
@@ -203,6 +201,12 @@ func (e *Elevator) stopElevator () int {
 	Elev_set_speed(0)
 	return 0
 }
+
+/*-------------------------------------------------------------------------------------------*/
+
+
+
+/*--------------------------- ADD AND REMOVE ORDER FUNCTIONS --------------------------------*/
 
 func (e *Elevator) addOrder(order ButtonSignal) {
 	e.orderMatrix[order.Floor][order.Button] = true
@@ -252,8 +256,12 @@ func (e *Elevator) removeOrders(completeOrderChan chan ButtonSignal) {
 	}
 }
 
+/*-------------------------------------------------------------------------------------------*/
+
+
+/*---------------------------- ELEVATOR MOVEMENT FUNCTIONS ----------------------------------*/
+
 func (e *Elevator) getNewDirection(arrivedAtFloorChan chan int) {
-		// return int eller send på channel ? - skriv til e.direction
 	if e.orderOnFloor(e.currentFloor) {
 		if e.orderMatrix[e.currentFloor][0] && e.orderMatrix[e.currentFloor][1] {
 			if e.currentFloor >= N_FLOORS/2 {
@@ -352,6 +360,9 @@ func (e *Elevator) orderInOtherDir() bool { // returnerer true hvis heisen skal 
 	return false
 }
 
+
+/* BLIR IKKE BRUKT
+
 func (e *Elevator) orderInCurrentDir() bool {
 	if e.direction > 0 {
 		for i := e.currentFloor+1; i <= 3; i++ {
@@ -368,7 +379,7 @@ func (e *Elevator) orderInCurrentDir() bool {
 	}
 	return false
 }
-
+*/
 
 
 func (e *Elevator) orderOnFloor(floor int) bool {	
@@ -410,7 +421,7 @@ func (e *Elevator) moreOrdersInDir() bool {
 
 
 
-func (e *Elevator) canCompleteOrder() bool {
+func (e *Elevator) canCompleteOrder() bool { // sjekk om alle if statements trengs
 	Println("SJEKKER OM ORDRE KAN GJENNOMFØRES")
 	if e.direction == 0 {
 		return true	
@@ -429,6 +440,7 @@ func (e *Elevator) canCompleteOrder() bool {
 }
 
 	
+	/* PRINT VARIABLES */
 
 func (e *Elevator) printInfo() {
 	for {
