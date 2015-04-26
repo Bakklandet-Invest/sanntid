@@ -86,7 +86,6 @@ func (e *Elevator) OrderHandler(intOrderChan chan ButtonSignal, fromMasterChan c
 
 func (e *Elevator) Run(arrivedAtFloorChan chan int, getMovingChan chan int, completeOrderChan chan ButtonSignal, stopSignalChan chan int, obstuctionChan chan int) {
 	for{
-		Println("STARTEN AV RUN")
 		select{
 			case <- stopSignalChan:
 				//e.speed = Elev_set_speed(0)
@@ -114,7 +113,6 @@ func (e *Elevator) Run(arrivedAtFloorChan chan int, getMovingChan chan int, comp
 						e.direction = 0
 					}
 					
-					Println("I ORDER ON CURRENT FLOOR: SOVER")
 					Elev_set_door_open_lamp(1)
 					Sleep(2*Second)
 					Elev_set_door_open_lamp(0)
@@ -161,8 +159,7 @@ func (e *Elevator) UpdateStatus(arrivedAtFloorChan chan int, updateOutChan chan 
 		if e.location != -1  && e.currentFloor != e.location{
 			e.currentFloor = e.location
 			Elev_set_floor_indicator(e.currentFloor) // fiks så den bare lyser når heisen står stille?
-			Printf("----------------------\nI ETASJE %v\n--------------------\n", Elev_get_floor_sensor_signal())
-			//send reachedfloor
+			
 			arrivedAtFloorChan <- 1
 			updateOutChan <- network.ElevatorInfo{e.orderMatrix, e.currentFloor, e.direction}
 			
@@ -249,17 +246,13 @@ func (e *Elevator) getNewDirection(arrivedAtFloorChan chan int) {
 	if e.orderOnFloor(e.currentFloor) {
 		if e.orderMatrix[e.currentFloor][0] && e.orderMatrix[e.currentFloor][1] {
 			if e.currentFloor >= N_FLOORS/2 {
-				Printf("SETTER DIRECTION = %v\n", 1)
 				e.direction = 1
 			} else {
-				Printf("SETTER DIRECTION = %v\n", -1)
 				e.direction = -1
 			}
 		} else if e.orderMatrix[e.currentFloor][0] {
-			Printf("SETTER DIRECTION = %v\n", 1)
 			e.direction = 1
 		} else if e.orderMatrix[e.currentFloor][1] {
-			Printf("SETTER DIRECTION = %v\n", -1)
 			e.direction = -1
 		} else {
 			e.removeSingleIntOrder(e.currentFloor, BUTTON_COMMAND)			
@@ -297,10 +290,8 @@ func (e *Elevator) getNewDirection(arrivedAtFloorChan chan int) {
 	}
 	if next != e.currentFloor {
 		if next > e.currentFloor {
-			Printf("SETTER DIRECTION = %v\n", 1)
 			e.direction = 1
 		} else {
-			Printf("SETTER DIRECTION = %v\n", -1)
 			e.direction = -1
 		}
 		return
@@ -385,7 +376,6 @@ func (e *Elevator) moreOrdersInDir() bool {
 
 
 func (e *Elevator) canCompleteOrder() bool { 
-	Println("SJEKKER OM ORDRE KAN GJENNOMFØRES")
 	if e.direction == 0 {
 		return true	
 	} else if e.orderMatrix[e.currentFloor][2] || e.currentFloor == 3 || e.currentFloor == 0 {
@@ -397,7 +387,6 @@ func (e *Elevator) canCompleteOrder() bool {
 	} else if e.orderMatrix[e.currentFloor][1] && e.direction < 0 {
 		return true
 	} else {
-		Println("KUNNE IKKE GJENNOMFØRE ORDRE")
 		return false
 	}
 }
