@@ -58,8 +58,8 @@ func main(){
 	extOrderChan := make(chan ButtonSignal)
 	fromMasterChan := make(chan ButtonSignal)//Kanalen som går inn til elev og gir oppdrag
 	
-	backupChan := make(chan map[string]network.ElevatorInfo)
-	elevInfoChan := make(chan network.ElevatorInfo)
+	//backupChan := make(chan map[string]network.ElevatorInfo)
+	//elevInfoChan := make(chan network.ElevatorInfo)
 	
 	// Holder orden på master/slave-rollen	
 	//terminateChan := make(chan bool)
