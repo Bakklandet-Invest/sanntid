@@ -210,12 +210,11 @@ func (e *Elevator) stopElevator() int {
 
 func (e *Elevator) addOrder(order ButtonSignal) {
 	e.orderMatrix[order.Floor][order.Button] = true
-	Elev_set_button_lamp(order)
 }
 
 func (e *Elevator) removeSingleExtOrder(floor int, button int, completeOrderChan chan ButtonSignal) {
 	e.orderMatrix[floor][button] = false
-	Elev_set_button_lamp(ButtonSignal{button, floor, 0}) // lag en lokal "completedOrder" variabel?
+ 														// lag en lokal "completedOrder" variabel?
 	completeOrderChan <- ButtonSignal{button, floor, 0}
 }
 
@@ -359,27 +358,6 @@ func (e *Elevator) orderInOtherDir() bool { // returnerer true hvis heisen skal 
 	} 
 	return false
 }
-
-
-/* BLIR IKKE BRUKT
-
-func (e *Elevator) orderInCurrentDir() bool {
-	if e.direction > 0 {
-		for i := e.currentFloor+1; i <= 3; i++ {
-			if e.orderOnFloor(i) {
-				return true
-			}
-		}	
-	} else if e.direction < 0 {
-		for i := e.currentFloor-1; i >= 0; i-- {
-			if e.orderOnFloor(i)  {
-				return true
-			}
-		}
-	}
-	return false
-}
-*/
 
 
 func (e *Elevator) orderOnFloor(floor int) bool {	
