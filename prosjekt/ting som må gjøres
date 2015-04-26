@@ -7,6 +7,10 @@ backup - filehandler
 kostfunksjon
 
 
+forbedring av heis:
+ - skriv om elevator så den finner ny retning før den sover
+ - lag en egen funksjon for fjerning av ordre mens heisen beveger seg
+ - fjern ordre i etasjen før heisen sover på etasjen
 
 
 
@@ -17,9 +21,40 @@ KOSTFUNKSJON
 	- hvis heisen har dir = 0: tell etasjer unna
 	- hvis heisen har dir != 0, tell med stop til hvor langt unna stoppet er. hvis heisen må endre retning, snu når heisen vil snu. (f.eks heisen snur i 1, da må funksjonen snu i 1. og ikke 0.)
 
+lag en funksjon cost
+	- sjekker om noen heiser står stille eller er på vei i samme riktig (og evt om de evt stopper og kan snu om 1 eller få stop (hvis den ikke har ordre videre i retningen vil heisen bytte retning hvis den får orderen og ankommer etasjen))
+	
+		- hvis dette er tilfellet kall funksjonen "simpleCost", en enkel funksjon som fungerer hvis retningen er 0 eller i riktig retning (og evt ekstra greia)
 
-func cost(ElevInfo) int {
-	if 
+	- hvis alle heiser er på vei i motsatt retning
 
+		- kall funksjonen complexCost
+			- complexCost iterer gjennom ordermatrix FRA currentfloor og i retningen heisen har TIL order.Floor i motsatt retning. bruk en ekstra variabel for å ta med casen der den vil kunne motta flere ordere som vil bli lagt til mellom nåværende ordre og orderen som skal legges til.
+
+			 
+
+func simpleCost(ElevInfo ElevatorInfo, Order ButtonSignal) int {
+	cost := 0
+	if ElevInfo.direction == 0 { //har den dir = 0 har den ingen ordere i kø
+		cost = int(math.Abs(float64(ElevInfo.Floor - Order.Floor))) 
+		return cost
+	} else if ElevInfo.Dir > 0 && Order.Floor > ElevInfo.Floor && (Order.Button != CALL_ORDER_DOWN || Order.Floor == 3) { 
+		for i := ElevInfo.Floor+1
+
+	}
 
 }
+
+
+
+
+
+ButtonSignal{button, floor, light}
+
+
+
+
+
+
+
+
