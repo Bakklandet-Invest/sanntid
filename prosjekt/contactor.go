@@ -19,7 +19,7 @@ var LiftsOnlineInfo = make(map[string]network.ElevatorInfo)
 var disconnElevChan = make(chan network.ConnectionUDP)
 var myID string = findMyID()
 
-var uncompleteOrders []ButtonSignal
+var uncompleteOrders Matrix
 
 func writemap(checkMasterChan chan string) {
 	for {
@@ -55,11 +55,13 @@ func main(){
 	updateInChan := make(chan network.ElevatorInfo)//Trenger ikke egen case, messageHandler tar ansvar
 	checkMasterChan := make(chan string)
 	//checkMasterChan<-myID	
-	newOrderChan := make(chan ButtonSignal,69)
+	newOrderChan := make(chan ButtonSignal,20)
 	completeOrderChan := make(chan ButtonSignal)
 	extOrderChan := make(chan ButtonSignal)
 	fromMasterChan := make(chan ButtonSignal)//Kanalen som går inn til elev og gir oppdrag
-	
+
+		
+	completeOrderBroadcastChan := make(chan ButtonSignal)	
 	backupChan := make(chan /*map[string]*/Matrix)//network.ElevatorInfo)
 	//elevInfoChan := make(chan network.ElevatorInfo)
 	
@@ -69,9 +71,9 @@ func main(){
 
 	go backupHandler(backupChan)
 	
-	go networkHandler(updateInChan, checkMasterChan, newOrderChan, completeOrderChan)
+	go networkHandler(updateInChan, checkMasterChan, newOrderChan, completeOrderChan, completeOrderBroadcastChan)
 	go InitElevator(updateOutChan,  checkMasterChan, completeOrderChan, extOrderChan, fromMasterChan)
-	go Master(updateOutChan, checkMasterChan, newOrderChan, completeOrderChan, extOrderChan, fromMasterChan)
+	go Master(updateOutChan, checkMasterChan, newOrderChan, completeOrderChan, extOrderChan, fromMasterChan, completeOrderBroadcastChan)
 
 	<-hengekanal
 }
@@ -79,18 +81,16 @@ func main(){
 //func checkMaster(checkMasterChan chan string){
 
 
-func Slave(updateOutChan chan network.ElevatorInfo, checkMasterChan chan string, newOrderChan chan ButtonSignal, completeOrderChan chan ButtonSignal, extOrderChan chan ButtonSignal, fromMasterChan chan ButtonSignal){		
-	//go networkHandler()
-	var masterAddr string //evt lagre sin egen slik at meldingene sendes til seg selv
+func Slave(updateOutChan chan network.ElevatorInfo, checkMasterChan chan string, newOrderChan chan ButtonSignal, completeOrderChan chan ButtonSignal, extOrderChan chan ButtonSignal, fromMasterChan chan ButtonSignal, completeOrderBroadcastChan chan ButtonSignal){		
+	var masterAddr string 
 	fmt.Println("JEG ER NÅ EN SLAVE")
-	// og ikke forsvinner i vente på en master
 	for{
 		select{
 			case master := <- checkMasterChan:
 				if master == myID{
 					//terminateChan<-true
 					//<-terminatedChan
-					go Master(updateOutChan, checkMasterChan, newOrderChan, completeOrderChan, extOrderChan, fromMasterChan)
+					go Master(updateOutChan, checkMasterChan, newOrderChan, completeOrderChan, extOrderChan, fromMasterChan, completeOrderBroadcastChan)
 					return
 				} //PROBLEM UNDER- i init fasen, vil ikke masterADdr eksistere
 				masterAddr = liftsOnline[master].Addr
@@ -112,13 +112,12 @@ func Slave(updateOutChan chan network.ElevatorInfo, checkMasterChan chan string,
 	}
 }
 
-func Master(updateOutChan chan network.ElevatorInfo, checkMasterChan chan string, newOrderChan chan ButtonSignal, completeOrderChan chan ButtonSignal, extOrderChan chan ButtonSignal, fromMasterChan chan ButtonSignal){
+func Master(updateOutChan chan network.ElevatorInfo, checkMasterChan chan string, newOrderChan chan ButtonSignal, completeOrderChan chan ButtonSignal, extOrderChan chan ButtonSignal, fromMasterChan chan ButtonSignal, completeOrderBroadcastChan chan ButtonSignal){
 	fmt.Println("JEG ER NÅ MASTER")
 	//masterAddr := liftsOnline[myID].Addr
 	//masterA := liftsOnline[myID]
 	fmt.Println("----------MASTERADDRESSE: ", myID)
 	fmt.Println(liftsOnline)
-	i := 0
 	
 	for{
 		select{
@@ -126,7 +125,7 @@ func Master(updateOutChan chan network.ElevatorInfo, checkMasterChan chan string
 				if master != myID{
 					//terminateChan<-true
 					//<-terminatedChan
-					go Slave(updateOutChan, checkMasterChan, newOrderChan, completeOrderChan, extOrderChan, fromMasterChan)
+					go Slave(updateOutChan, checkMasterChan, newOrderChan, completeOrderChan, extOrderChan, fromMasterChan, completeOrderBroadcastChan)
 					return
 				}
 			case update := <- updateOutChan:
@@ -135,22 +134,48 @@ func Master(updateOutChan chan network.ElevatorInfo, checkMasterChan chan string
 			case orderButtonSignal := <- newOrderChan: //Finner beste heis til å ta jobben og sender til den
 				fmt.Println("newOrderChan leverer videre")
 				//returnerer heis best egnet for jobbet
+				//heisID := myID//costfunction(orderButtonSignal) //order inneholder opp/ned+etasje
+		// --- LAGRE ordren i uncompleteOrders og slette igjen når completed er mottatt??
+				if uncompleteOrders[orderButtonSignal.Floor][orderButtonSignal.Button] == true{
+					fmt.Println("BLOKKERT ORDERE")
+					continue
+				} 
+				uncompleteOrders[orderButtonSignal.Floor][orderButtonSignal.Button] = true
+				Elev_set_button_lamp(orderButtonSignal)
+				
 				heisID := myID//costfunction(orderButtonSignal) //order inneholder opp/ned+etasje
 		// --- LAGRE ordren i uncompleteOrders og slette igjen når completed er mottatt??
-				
-
-				
-				if i == 0{
-					heisID = "153"
-					i++
-				}else if i == 1{
-					 heisID = "157"
-					i++
-				}else if i == 2{
-					heisID = "145"
-					i = 0
+				cost := 100
+				newCost := 101				
+				for key := range LiftsOnlineInfo {
+					heisInfo := LiftsOnlineInfo[key]
+					/*if (heisInfo.Dir > 0 && heisInfo.Floor > orderButtonSignal.Floor) {
+						newCost = control.ComplexCost(heisInfo.Floor, orderButtonSignal.Floor	
+					} else if (heisInfo.Dir < 0 && heisInfo.Floor < orderButtonSignal.Floor) {
+						newCost = control.ComplexCost(heisInfo.Dir, heisInfo.Floor, heisInfo.Matrix, orderButtonSignal.Floor
+					} else {
+						newCost = control.SimpleCost(heisInfo.Floor, orderButtonSignal.Floor)
+					}
+					if newCost < cost {
+						cost = newCost
+						bestID = key
+					}
+				}*/
+					
+					if heisInfo.Dir == 0 {
+						newCost = SimpleCost(heisInfo.Floor, orderButtonSignal.Floor)			
+					} else if (heisInfo.Dir > 0 && ((heisInfo.Floor < orderButtonSignal.Floor) && orderButtonSignal.Button == BUTTON_CALL_UP)){
+						newCost = SimpleCost(heisInfo.Floor, orderButtonSignal.Floor)
+					} else if (heisInfo.Dir < 0 && ((heisInfo.Floor > orderButtonSignal.Floor) && orderButtonSignal.Button == BUTTON_CALL_DOWN)){
+						newCost = SimpleCost(heisInfo.Floor, orderButtonSignal.Floor)
+					} else {
+						newCost = ComplexCost(heisInfo.Dir, heisInfo.Floor, heisInfo.Matrix, orderButtonSignal.Floor)
+					}
+					if newCost < cost {
+						cost = newCost
+						heisID = key
+					}
 				}
-
 
 				if heisID == myID{
 					fromMasterChan<-orderButtonSignal
@@ -161,11 +186,10 @@ func Master(updateOutChan chan network.ElevatorInfo, checkMasterChan chan string
 				}
 			case extOrdButtonSignal := <- extOrderChan: //Type ButtonSignal
 				//---------- LEGGE TIL I UNCOMPLETE ORDERS, HVIS IKKE FÅTT SLETTET VHA completeOrderChan innen gitt tid (si 10 sek), ta ordren og legg inn i interne ordre matrisen
-				for i := range uncompleteOrders{
-					if uncompleteOrders[i] != extOrdButtonSignal{
-						uncompleteOrders = append(uncompleteOrders, extOrdButtonSignal)
-					}
-				}			
+
+				
+					
+				
 
 
 				fmt.Println("Master mottatt fra extOrderChan")
@@ -176,14 +200,13 @@ func Master(updateOutChan chan network.ElevatorInfo, checkMasterChan chan string
 			
 			case completeOrderLocal := <- completeOrderChan: //Type ButtonSignal
 				// slette fra uncompleteOrders (PS; SYNKE uncompleteOrders til alle for backup?) (no orders lost)
-				_ = completeOrderLocal
+				//_ = completeOrderLocal
+				uncompleteOrders[completeOrderLocal.Floor][completeOrderLocal.Button] = false
+				Elev_set_button_lamp(completeOrderLocal)
 			case completeOrderBroadcast := <-completeOrderBroadcastChan:
 				// Her sjekke om den orderen finnes i min lokale kø fra extOrderChan, evt slette
-				for i := range uncompleteOrders{
-					if uncompleteOrders[i] != extOrdButtonSignal{
-						uncompleteOrders = append(uncompleteOrders[:i], extOrdButtonSignal[i+1]...)
-					}
-				}	
+				uncompleteOrders[completeOrderBroadcast.Floor][completeOrderBroadcast.Button] = false
+				Elev_set_button_lamp(completeOrderBroadcast)
 		}
 	}
 }
@@ -252,13 +275,13 @@ func matrixCompareOr(m1 Matrix, m2 Matrix) (Matrix){
 	return m3
 }
 
-func networkHandler(updateInChan chan network.ElevatorInfo, checkMasterChan chan string, newOrderChan chan ButtonSignal, completeOrderChan chan ButtonSignal){
+func networkHandler(updateInChan chan network.ElevatorInfo, checkMasterChan chan string, newOrderChan chan ButtonSignal, completeOrderChan chan ButtonSignal, completeOrderBroadcastChan chan ButtonSignal){
 	network.Init()
 	go writemap(checkMasterChan)
 	for{
 		select{
 		case msg := <-network.RecieveChan:
-			messageHandler(network.ParseMessage(msg), updateInChan, checkMasterChan, newOrderChan, completeOrderChan)
+			messageHandler(network.ParseMessage(msg), updateInChan, checkMasterChan, newOrderChan, completeOrderChan, completeOrderBroadcastChan)
 		case conn := <- disconnElevChan:
 			deleteLift(conn.Addr, checkMasterChan)
 		}
@@ -268,7 +291,7 @@ func networkHandler(updateInChan chan network.ElevatorInfo, checkMasterChan chan
 }
 
 //  msg.Addr byttet med id i liftsonline(key)
-func messageHandler(msg network.Message, updateInChan chan network.ElevatorInfo, checkMasterChan chan string, newOrderChan chan ButtonSignal, completeOrderChan chan ButtonSignal) {
+func messageHandler(msg network.Message, updateInChan chan network.ElevatorInfo, checkMasterChan chan string, newOrderChan chan ButtonSignal, completeOrderChan chan ButtonSignal, completeOrderBroadcastChan chan ButtonSignal) {
 	id := network.FindID(msg.Addr)
 	switch msg.Content{
 		case network.Alive:
