@@ -15,7 +15,7 @@ import(
 )
 
 var liftsOnline = make(map[string]network.ConnectionUDP)
-var liftsOnlineInfo = make(map[string]network.ElevatorInfo)
+var LiftsOnlineInfo = make(map[string]network.ElevatorInfo)
 var disconnElevChan = make(chan network.ConnectionUDP)
 var myID string = findMyID()
 
@@ -198,21 +198,21 @@ func backupHandler(backupChan chan Matrix/*network.ElevatorInfo.Matrix*/ ){
 	for{
 		select{
 		case <-saveTimer.C: //tar 
-			filehandler.SaveBackup(liftsOnlineInfo)
+			filehandler.SaveBackup(LiftsOnlineInfo)
 			//restart timer!!
 			saveTimer.Reset(saveBackupTime)
 		case conn := <- disconnElevChan: //LEGGER inn ordre fra død heis
 			id := network.FindID(conn.Addr)
-			m := matrixCompareOr(liftsOnlineInfo[id].Matrix, liftsOnlineInfo[myID].Matrix)
+			m := matrixCompareOr(LiftsOnlineInfo[id].Matrix, LiftsOnlineInfo[myID].Matrix)
 			backupChan<-m //Sender OR'et matrise til elevator.
 			//________ BURDE KANSKJE FORDELES PÅ NYTT IGJEN???? OG INTERNE ORDRE BURDE IGNORERES
-			delete(liftsOnlineInfo, id)
+			delete(LiftsOnlineInfo, id)
 			//sletting av  liftsOnline blir gjort i networkHandler
 		case <-loadTimer.C: //SJEKKER EGEN MATRISE MOT BACKUPEN
 			backupMap := filehandler.LoadBackup()
 			var backupMatrix /*(network.ElevatorInfo).*/Matrix = backupMap[myID].Matrix
-			if backupMatrix != liftsOnlineInfo[myID].Matrix{
-				backupMatrix = matrixCompareOr(backupMatrix, liftsOnlineInfo[myID].Matrix)
+			if backupMatrix != LiftsOnlineInfo[myID].Matrix{
+				backupMatrix = matrixCompareOr(backupMatrix, LiftsOnlineInfo[myID].Matrix)
 				backupChan<-backupMatrix
 			}
 			loadTimer.Reset(loadBackupTime)
@@ -280,8 +280,8 @@ func messageHandler(msg network.Message, updateInChan chan network.ElevatorInfo,
 		case network.Info:
 			// LAGRER INFO OM HEISEN M/ TILHØRENDE ID, hvor?
 			//elevInfoChan<-msg.ElevInfo	//HVA med å bare utføre arbeitet her
-			liftsOnlineInfo[id] = msg.ElevInfo
-			fmt.Println(liftsOnlineInfo)
+			LiftsOnlineInfo[id] = msg.ElevInfo
+			fmt.Println(LiftsOnlineInfo)
 // bruke updateInChan	--- endret til elevInfoChan??		
 		}		
 }

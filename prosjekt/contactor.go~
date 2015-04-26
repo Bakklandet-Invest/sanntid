@@ -200,7 +200,7 @@ func backupHandler(backupChan chan Matrix/*network.ElevatorInfo.Matrix*/ ){
 		case <-saveTimer.C: //tar 
 			filehandler.SaveBackup(liftsOnlineInfo)
 			//restart timer!!
-			saveTimer.Reset(loadBackupTime)
+			saveTimer.Reset(saveBackupTime)
 		case conn := <- disconnElevChan: //LEGGER inn ordre fra død heis
 			id := network.FindID(conn.Addr)
 			m := matrixCompareOr(liftsOnlineInfo[id].Matrix, liftsOnlineInfo[myID].Matrix)
