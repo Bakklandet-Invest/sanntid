@@ -138,7 +138,6 @@ func Elev_get_order(intOrderChan chan ButtonSignal, extOrderChan chan ButtonSign
 			}
 		}
 		Sleep(30*Millisecond)
-	//go prevButtonSig.ClearPrevButtonSig()
 	}
 }
 
