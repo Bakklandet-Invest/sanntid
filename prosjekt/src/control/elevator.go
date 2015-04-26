@@ -1,8 +1,6 @@
 package control
 
 import (
-	"strconv"
-	"net"
 	."driver"
 	."fmt"
 	."time" 
@@ -96,7 +94,7 @@ func (e *Elevator) Run(arrivedAtFloorChan chan int, getMovingChan chan int, comp
 				e.speed = e.stopElevator()
 				Elev_set_stop_lamp(1)
 				Sleep(3*Second)
-				elev_set_stop_lamp(0)
+				Elev_set_stop_lamp(0)
 				// hva skal skje når stop-knappen trykkes?
 			 
 			case <- obstuctionChan:
