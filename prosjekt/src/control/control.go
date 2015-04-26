@@ -2,14 +2,12 @@ package control
 
 import (
 	"math"
-	"fmt"
 	)
 
 
 
 func SimpleCost(elevFloor int, orderFloor int) int {
 	cost := int(math.Abs(float64(elevFloor - orderFloor)))
-	fmt.Printf("------------------------\nFANT KOST: %v\n------------------------------\n", cost)
 	return cost
 }
 
@@ -93,7 +91,6 @@ func ComplexCost(elevDirection int, elevFloor int, elevOrderMatrix [4][3]bool, o
 			}
 		}
 	}
-	fmt.Printf("------------------------\nFANT KOST: %v\n------------------------------\n", cost)
 	return cost
 }
 

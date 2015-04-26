@@ -6,13 +6,6 @@ import (
 	"encoding/json"
 )
 
-//var RecieveChan = make(chan messageUDP) //Public
-//var sendChan = make(chan messageUDP)
-//Forsøker å flytte de kanalene til variables
-
-//VAR INNI INIT()	
-
-
 func Init(){
 	const localListenPort = 14369
 	const broadcastListenPort = 14370
@@ -28,7 +21,7 @@ func Init(){
 }
 
 func ParseMessage(msgUDP messageUDP) Message {
-	fmt.Printf("Before parse: %s from %s\n", string(msgUDP.data), msgUDP.recieveAddr)
+	//fmt.Printf("Before parse: %s from %s\n", string(msgUDP.data), msgUDP.recieveAddr)
 
 	var msg Message
 	if err := json.Unmarshal(msgUDP.data[:msgUDP.length], &msg); err != nil {
@@ -36,7 +29,6 @@ func ParseMessage(msgUDP messageUDP) Message {
 	}
 
 	msg.Addr = msgUDP.recieveAddr
-	//fmt.Printf("After Unmarshal: %s\n", msg.Addr)
 	return msg
 }
 
@@ -50,11 +42,10 @@ func aliveNotifier() {
 
 func sendMessages() {
 	for {
-		//fmt.Println("sendMessages waiting on MessageChan")
 		msg := <-MessageChan
-		if msg.Content != Alive{
+		/*if msg.Content != Alive{
 			PrintMessage(msg)
-		}
+		}*/
 		raddr := msg.Addr
 		jsonMsg, err := json.Marshal(msg)
 		if err != nil {

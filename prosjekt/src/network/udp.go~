@@ -2,24 +2,19 @@ package network
 
 import (
 	"net"
-	//"strings"
-	//"time"
 	"strconv"
 	"fmt"
-	//"os"
 )
 
-//var broadcastAddr *net.UDPAddr //Private?
-//forsøker å flytte til variables
 
-type messageUDP struct{ //Private?
+type messageUDP struct{ 
 	recieveAddr string
 	data []byte
 	length int // length of recieved data in bytes
 }
 
-// Bare for testing
-func PrintUDPMessage(msg  messageUDP){ //Private?
+// For testing
+func PrintUDPMessage(msg  messageUDP){ 
 	fmt.Printf("msg messageUDP: \n recieveAddr = %s \n data = %s \n length = %v \n", msg.recieveAddr, msg.data, msg.length)
 }
 
@@ -27,7 +22,6 @@ func InitUDP(localListenPort, broadcastPort, messageSize int, sendCh, recieveCh 
 	fmt.Println("InitUDP running")
 	
 	broadcastAddr, err = net.ResolveUDPAddr("udp","255.255.255.255:"+strconv.Itoa(broadcastPort))
-	// ? Dette error-opplegget eller panic?
 	if err != nil{
 		return err
 	}
@@ -96,12 +90,12 @@ func transmitServerUDP(lConn, bConn *net.UDPConn, sendCh chan messageUDP) {
 	var n int
 
 	for {
-		msg := <-sendCh // Venter på ny melding å sende
+		msg := <-sendCh // Waits for new message
 		
 		if msg.recieveAddr == "broadcast" {
 			n, err = lConn.WriteToUDP(msg.data, broadcastAddr)
 		} else {
-			recieveAddr, err := net.ResolveUDPAddr("udp", msg.recieveAddr/*+":"+strconv.Itoa(localListenPort)*/)
+			recieveAddr, err := net.ResolveUDPAddr("udp", msg.recieveAddr)
 			if err != nil {
 				fmt.Printf("Error in transmitServerUDP: ResolveUDPAddr failed\n")
 				panic(err)
