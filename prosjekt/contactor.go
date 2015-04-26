@@ -112,6 +112,8 @@ func Master(updateOutChan chan network.ElevatorInfo, checkMasterChan chan string
 	//masterA := liftsOnline[myID]
 	fmt.Println("----------MASTERADDRESSE: ", myID)
 	fmt.Println(liftsOnline)
+	i := 0
+	
 	for{
 		select{
 			case master := <- checkMasterChan:
@@ -129,6 +131,19 @@ func Master(updateOutChan chan network.ElevatorInfo, checkMasterChan chan string
 				//returnerer heis best egnet for jobbet
 				heisID := myID//costfunction(orderButtonSignal) //order inneholder opp/ned+etasje
 		// --- LAGRE ordren i uncompleteOrders og slette igjen når completed er mottatt??
+				
+
+				
+				if i == 0{
+					heisID == "153"
+					i++
+				}else if i == 1{
+					 heisID == "157"
+					i++
+				}else if i == 2{
+					heisID == "145"
+					i = 0
+				}
 				if heisID == myID{
 					fromMasterChan<-orderButtonSignal
 				}else{
