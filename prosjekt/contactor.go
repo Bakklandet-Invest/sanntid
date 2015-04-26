@@ -103,6 +103,7 @@ func Slave(updateOutChan chan network.ElevatorInfo, checkMasterChan chan string,
 				extOrdMsg := network.Message{Content: network.NewOrder, Addr: masterAddr, Floor: extOrdButtonSignal.Floor, Button: extOrdButtonSignal.Button}
 				network.MessageChan <- extOrdMsg 
 			// PROBLEM - lagre extOrd lokalt i tilfelle intet svar, kjøre da for å være sikker??
+				
 	
 			case orderButtonSignal := <- newOrderChan:
 				fromMasterChan <- orderButtonSignal
@@ -195,6 +196,8 @@ func Master(updateOutChan chan network.ElevatorInfo, checkMasterChan chan string
 					newOrderMsg := network.Message{Content: network.NewOrder, Addr: addrOrderReciever, Floor: orderButtonSignal.Floor, Button: orderButtonSignal.Button}
 					network.MessageChan <- newOrderMsg
 				}
+				updateMsg := network.Message{Content: network.Light, Addr: "broadcast", ElevInfo: network.ElevatorInfo{Matrix: uncompleteOrders}}
+				network.MessageChan <- updateMsg
 			case extOrdButtonSignal := <- extOrderChan: //Type ButtonSignal
 				//---------- LEGGE TIL I UNCOMPLETE ORDERS, HVIS IKKE FÅTT SLETTET VHA completeOrderChan innen gitt tid (si 10 sek), ta ordren og legg inn i interne ordre matrisen
 
@@ -335,7 +338,8 @@ func messageHandler(msg network.Message, updateInChan chan network.ElevatorInfo,
 			//elevInfoChan<-msg.ElevInfo	//HVA med å bare utføre arbeitet her
 			LiftsOnlineInfo[id] = msg.ElevInfo
 			updateLightsSlaveChan<-1
-
+		case network.Light:
+			updateLightsSlaveChan<-1
 			//fmt.Println(LiftsOnlineInfo)
 // bruke updateInChan	--- endret til elevInfoChan??		
 		}		
