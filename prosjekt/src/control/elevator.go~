@@ -83,7 +83,7 @@ func InitElevator(updateOutChan chan network.ElevatorInfo, checkMasterChan chan 
 	go Elev_get_order(intOrderChan, extOrderChan)
 	go e.Run(arrivedAtFloorChan, getMovingChan, completeOrderChan)
 	go e.UpdateStatus(arrivedAtFloorChan, updateOutChan)
-	go e.printInfo()
+	//go e.printInfo()
 	
 	Println("ferdig med init")
 	return e
@@ -269,7 +269,7 @@ func (e *Elevator) getNewDirection(arrivedAtFloorChan chan int) {
 			Printf("SETTER DIRECTION = %v\n", -1)
 			e.direction = -1
 		} else {
-			e.removeSingleOrder(e.currentFloor, BUTTON_COMMAND)			
+			e.removeSingleIntOrder(e.currentFloor, BUTTON_COMMAND)			
 			return
 		}
 		arrivedAtFloorChan <- 1

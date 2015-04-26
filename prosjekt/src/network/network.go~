@@ -6,9 +6,9 @@ import (
 	"encoding/json"
 )
 
-var RecieveChan = make(chan messageUDP) //Public
-var sendChan = make(chan messageUDP)
-
+//var RecieveChan = make(chan messageUDP) //Public
+//var sendChan = make(chan messageUDP)
+//Forsøker å flytte de kanalene til variables
 
 //VAR INNI INIT()	
 

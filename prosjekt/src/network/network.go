@@ -52,8 +52,9 @@ func sendMessages() {
 	for {
 		//fmt.Println("sendMessages waiting on MessageChan")
 		msg := <-MessageChan
-
-		PrintMessage(msg)
+		if msg.Content != Alive{
+			PrintMessage(msg)
+		}
 		raddr := msg.Addr
 		jsonMsg, err := json.Marshal(msg)
 		if err != nil {

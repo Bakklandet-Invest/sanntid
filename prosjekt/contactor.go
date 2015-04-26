@@ -52,7 +52,7 @@ func main(){
 	updateInChan := make(chan network.ElevatorInfo)//Trenger ikke egen case, messageHandler tar ansvar
 	checkMasterChan := make(chan string)
 	//checkMasterChan<-myID	
-	newOrderChan := make(chan ButtonSignal)
+	newOrderChan := make(chan ButtonSignal,69)
 	completeOrderChan := make(chan ButtonSignal)
 	extOrderChan := make(chan ButtonSignal)
 	fromMasterChan := make(chan ButtonSignal)//Kanalen som går inn til elev og gir oppdrag
@@ -92,6 +92,7 @@ func Slave(updateOutChan chan network.ElevatorInfo, checkMasterChan chan string,
 				updateMsg := network.Message{Content: network.Info, Addr: "broadcast", ElevInfo: update}
 				network.MessageChan <- updateMsg
 			case extOrdButtonSignal := <- extOrderChan:
+				fmt.Println("Slave mottatt fra extOrderChan")
 				extOrdMsg := network.Message{Content: network.NewOrder, Addr: masterAddr, Floor: extOrdButtonSignal.Floor, Button: extOrdButtonSignal.Button}
 				network.MessageChan <- extOrdMsg //Få pakket forunftig beskjed her først da, med recieverAddr til MASTER
 			// PROBLEM - lagre extOrd lokalt i tilfelle intet svar, kjøre da for å være sikker??
@@ -107,7 +108,10 @@ func Slave(updateOutChan chan network.ElevatorInfo, checkMasterChan chan string,
 
 func Master(updateOutChan chan network.ElevatorInfo, checkMasterChan chan string, newOrderChan chan ButtonSignal, completeOrderChan chan ButtonSignal, extOrderChan chan ButtonSignal, fromMasterChan chan ButtonSignal){
 	fmt.Println("JEG ER NÅ MASTER")
-	masterAddr := liftsOnline[myID].Addr
+	//masterAddr := liftsOnline[myID].Addr
+	//masterA := liftsOnline[myID]
+	fmt.Println("----------MASTERADDRESSE: ", myID)
+	fmt.Println(liftsOnline)
 	for{
 		select{
 			case master := <- checkMasterChan:
@@ -120,10 +124,8 @@ func Master(updateOutChan chan network.ElevatorInfo, checkMasterChan chan string
 			case update := <- updateOutChan:
 				updateMsg := network.Message{Content: network.Info, Addr: "broadcast", ElevInfo: update}
 				network.MessageChan <- updateMsg
-			case extOrdButtonSignal := <- extOrderChan:
-				extOrdMsg := network.Message{Content: network.NewOrder, Addr: masterAddr, Floor: extOrdButtonSignal.Floor, Button: extOrdButtonSignal.Button}
-				network.MessageChan <- extOrdMsg //Få pakket forunftig beskjed her først da, med recieverAddr til MASTER
 			case orderButtonSignal := <- newOrderChan: //Finner beste heis til å ta jobben og sender til den
+				fmt.Println("newOrderChan leverer videre")
 				//returnerer heis best egnet for jobbet
 				heisID := myID//costfunction(orderButtonSignal) //order inneholder opp/ned+etasje
 		// --- LAGRE ordren i uncompleteOrders og slette igjen når completed er mottatt??
@@ -134,6 +136,14 @@ func Master(updateOutChan chan network.ElevatorInfo, checkMasterChan chan string
 					newOrderMsg := network.Message{Content: network.NewOrder, Addr: addrOrderReciever, Floor: orderButtonSignal.Floor, Button: orderButtonSignal.Button}
 					network.MessageChan <- newOrderMsg
 				}
+			case extOrdButtonSignal := <- extOrderChan:
+				
+				fmt.Println("Master mottatt fra extOrderChan")
+				//extOrdMsg := network.Message{Content: network.NewOrder, Addr: masterAddr, Floor: extOrdButtonSignal.Floor, Button: extOrdButtonSignal.Button}
+				//fmt.Println("MASTERADDRESSE: ", masterAddr)
+				//network.MessageChan <- extOrdMsg //Få pakket forunftig beskjed her først da, med recieverAddr til MASTER
+				newOrderChan <- extOrdButtonSignal
+			
 			case completeOrder := <- completeOrderChan:
 				// slette fra uncompleteOrders (PS; SYNKE uncompleteOrders til alle for backup?) (no orders lost)
 				_ = completeOrder
@@ -201,7 +211,7 @@ func messageHandler(msg network.Message, updateInChan chan network.ElevatorInfo,
 			// KANAL skrive orderen til canalen
 			/*tempButtonSignal := ButtonSignal{Floor: msg.Floor, Button: msg.Button} 
 			newOrderChan<-tempButtonSignal*/
-			newOrderChan<-ButtonSignal{Floor: msg.Floor, Button: msg.Button} 
+			newOrderChan<-ButtonSignal{Floor: msg.Floor, Button: msg.Button, Light: 1} 
 			//cost :=  69 //costfunksjonen inn her
 			
 			//costMsg := network.Message{Content: network.Cost, Floor: msg.Floor, Button: msg.Button, Cost: cost}

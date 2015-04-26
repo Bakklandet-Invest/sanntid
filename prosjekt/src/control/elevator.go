@@ -83,7 +83,7 @@ func InitElevator(updateOutChan chan network.ElevatorInfo, checkMasterChan chan 
 	go Elev_get_order(intOrderChan, extOrderChan)
 	go e.Run(arrivedAtFloorChan, getMovingChan, completeOrderChan)
 	go e.UpdateStatus(arrivedAtFloorChan, updateOutChan)
-	go e.printInfo()
+	//go e.printInfo()
 	
 	Println("ferdig med init")
 	return e
@@ -97,6 +97,7 @@ func (e *Elevator) OrderHandler(intOrderChan chan ButtonSignal, fromMasterChan c
 		Println("starten av OrderHandler løkke")
 		select{
 			case newOrder = <- fromMasterChan:
+				Println("MOTTATT FRA MASTER")
 				e.addOrder(newOrder)
 				if e.direction == 0 {
 					getMovingChan <- 1

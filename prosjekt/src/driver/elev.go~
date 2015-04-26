@@ -119,11 +119,13 @@ func Elev_get_order(intOrderChan chan ButtonSignal, extOrderChan chan ButtonSign
 				buttonSig.Floor =  i
 				buttonSig.Button = BUTTON_CALL_UP
 				buttonSig.Light = 1
+				Println("Skriver fra elev_get_order( UP )")
 				extOrderChan <- buttonSig
 			} else if (Elev_get_button_signal(BUTTON_CALL_DOWN, i+1) == 1) {
 				buttonSig.Floor =  i+1
 				buttonSig.Button = BUTTON_CALL_DOWN
 				buttonSig.Light = 1
+				Println("Skriver fra elev_get_order( DOWN )")
 				extOrderChan <- buttonSig
 			} 
 		}
@@ -191,16 +193,4 @@ func Elev_set_door_open_lamp(value int) {
 	} else {
 		Io_clear_bit(LIGHT_DOOR_OPEN)
 	}
-}
-
-func Elev_stop_elev(dir int) int {
-	if dir > 0 {
-		Elev_set_speed(-300)
-		Sleep(5*Millisecond)
-	} else if dir < 0 {
-		Elev_set_speed(300)
-		Sleep(5*Millisecond)
-	} 
-	Elev_set_speed(0)
-	return 0
 }

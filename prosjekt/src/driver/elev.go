@@ -3,7 +3,7 @@ package driver
 import (
 	"math"
 	."time"
-	//."fmt"
+	."fmt"
 )
 
 
@@ -119,11 +119,13 @@ func Elev_get_order(intOrderChan chan ButtonSignal, extOrderChan chan ButtonSign
 				buttonSig.Floor =  i
 				buttonSig.Button = BUTTON_CALL_UP
 				buttonSig.Light = 1
+				Println("Skriver fra elev_get_order( UP )")
 				extOrderChan <- buttonSig
 			} else if (Elev_get_button_signal(BUTTON_CALL_DOWN, i+1) == 1) {
 				buttonSig.Floor =  i+1
 				buttonSig.Button = BUTTON_CALL_DOWN
 				buttonSig.Light = 1
+				Println("Skriver fra elev_get_order( DOWN )")
 				extOrderChan <- buttonSig
 			} 
 		}
