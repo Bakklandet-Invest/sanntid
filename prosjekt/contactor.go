@@ -135,13 +135,13 @@ func Master(updateOutChan chan network.ElevatorInfo, checkMasterChan chan string
 
 				
 				if i == 0{
-					heisID == "153"
+					heisID = "153"
 					i++
 				}else if i == 1{
-					 heisID == "157"
+					 heisID = "157"
 					i++
 				}else if i == 2{
-					heisID == "145"
+					heisID = "145"
 					i = 0
 				}
 				if heisID == myID{
