@@ -79,6 +79,9 @@ func InitElevator(updateOutChan chan network.ElevatorInfo, checkMasterChan chan 
 	arrivedAtFloorChan := make(chan int, 1) 
 	getMovingChan := make(chan int, 1)
 	intOrderChan := make(chan ButtonSignal, 1) // brukes i solo
+	stopSignalChan := make(chan int, 1)
+	obstuctionChan := make(chan int, 1)
+
 	go e.OrderHandler(intOrderChan, fromMasterChan, getMovingChan)
 	go Elev_get_order(intOrderChan, extOrderChan)
 	go e.Run(arrivedAtFloorChan, getMovingChan, completeOrderChan)
@@ -115,15 +118,17 @@ func (e *Elevator) Run(arrivedAtFloorChan chan int, getMovingChan chan int, comp
 	for{
 		Println("STARTEN AV RUN")
 		select{
-			/*case <- stopSignalChan:
+			case <- stopSignalChan:
 				//e.speed = Elev_set_speed(0)
+				Println("STOOOOOPPPPP!!!!!!!!!!!!!!!!!!!!!!")
 				e.speed = e.stopElevator()
-				Elev_set_stop_lamp(-1)
+				Elev_set_stop_lamp(1)
 				// hva skal skje når stop-knappen trykkes?
-			 */
-			/*case <- obstuctionChan:
-				// handle obstruction 
-			*/
+			 
+			case <- obstuctionChan:
+				Println("OBSTRUCTED!!!!!!!!!!!!!!!!!")
+				Sleep(Second) 
+			
 			case <- arrivedAtFloorChan:
 				if e.canCompleteOrder()  || !e.moreOrdersInDir() {
 					//e.speed = Elev_set_speed(0)
@@ -175,7 +180,12 @@ func (e *Elevator) Run(arrivedAtFloorChan chan int, getMovingChan chan int, comp
 func (e *Elevator) UpdateStatus(arrivedAtFloorChan chan int, updateOutChan chan network.ElevatorInfo) {
 	for {
 		e.location = Elev_get_floor_sensor_signal()
-		
+		if Elev_get_stop_signal() {
+			stopSignalChan <- 1
+		}
+		if Elev_get_obstruction_signal() {
+			obstuctionChan <- 1
+		}
 		if e.location != -1  && e.currentFloor != e.location{
 			e.currentFloor = e.location
 			Elev_set_floor_indicator(e.currentFloor) // fiks så den bare lyser når heisen står stille?
