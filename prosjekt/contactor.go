@@ -19,6 +19,8 @@ var LiftsOnlineInfo = make(map[string]network.ElevatorInfo)
 var disconnElevChan = make(chan network.ConnectionUDP)
 var myID string = findMyID()
 
+var uncompleteOrders []ButtonSignal
+
 func writemap(checkMasterChan chan string) {
 	for {
 		fmt.Printf("%v lifts online, master id: %v\n",len(liftsOnline),selectMaster(liftsOnline, checkMasterChan))
@@ -98,7 +100,7 @@ func Slave(updateOutChan chan network.ElevatorInfo, checkMasterChan chan string,
 			case extOrdButtonSignal := <- extOrderChan:
 				fmt.Println("Slave mottatt fra extOrderChan")
 				extOrdMsg := network.Message{Content: network.NewOrder, Addr: masterAddr, Floor: extOrdButtonSignal.Floor, Button: extOrdButtonSignal.Button}
-				network.MessageChan <- extOrdMsg //Få pakket forunftig beskjed her først da, med recieverAddr til MASTER
+				network.MessageChan <- extOrdMsg 
 			// PROBLEM - lagre extOrd lokalt i tilfelle intet svar, kjøre da for å være sikker??
 	
 			case orderButtonSignal := <- newOrderChan:
@@ -148,6 +150,8 @@ func Master(updateOutChan chan network.ElevatorInfo, checkMasterChan chan string
 					heisID = "145"
 					i = 0
 				}
+
+
 				if heisID == myID{
 					fromMasterChan<-orderButtonSignal
 				}else{
@@ -155,18 +159,31 @@ func Master(updateOutChan chan network.ElevatorInfo, checkMasterChan chan string
 					newOrderMsg := network.Message{Content: network.NewOrder, Addr: addrOrderReciever, Floor: orderButtonSignal.Floor, Button: orderButtonSignal.Button}
 					network.MessageChan <- newOrderMsg
 				}
-			case extOrdButtonSignal := <- extOrderChan:
+			case extOrdButtonSignal := <- extOrderChan: //Type ButtonSignal
 				//---------- LEGGE TIL I UNCOMPLETE ORDERS, HVIS IKKE FÅTT SLETTET VHA completeOrderChan innen gitt tid (si 10 sek), ta ordren og legg inn i interne ordre matrisen
-				
+				for i := range uncompleteOrders{
+					if uncompleteOrders[i] != extOrdButtonSignal{
+						uncompleteOrders = append(uncompleteOrders, extOrdButtonSignal)
+					}
+				}			
+
+
 				fmt.Println("Master mottatt fra extOrderChan")
 				//extOrdMsg := network.Message{Content: network.NewOrder, Addr: masterAddr, Floor: extOrdButtonSignal.Floor, Button: extOrdButtonSignal.Button}
 				//fmt.Println("MASTERADDRESSE: ", masterAddr)
 				//network.MessageChan <- extOrdMsg //Få pakket forunftig beskjed her først da, med recieverAddr til MASTER
 				newOrderChan <- extOrdButtonSignal
 			
-			case completeOrder := <- completeOrderChan: //Type ButtonSignal
+			case completeOrderLocal := <- completeOrderChan: //Type ButtonSignal
 				// slette fra uncompleteOrders (PS; SYNKE uncompleteOrders til alle for backup?) (no orders lost)
-				_ = completeOrder
+				_ = completeOrderLocal
+			case completeOrderBroadcast := <-completeOrderBroadcastChan:
+				// Her sjekke om den orderen finnes i min lokale kø fra extOrderChan, evt slette
+				for i := range uncompleteOrders{
+					if uncompleteOrders[i] != extOrdButtonSignal{
+						uncompleteOrders = append(uncompleteOrders[:i], extOrdButtonSignal[i+1]...)
+					}
+				}	
 		}
 	}
 }
@@ -276,7 +293,7 @@ func messageHandler(msg network.Message, updateInChan chan network.ElevatorInfo,
 			//network.MessageChan <- costMsg
 		case network.CompletedOrder:
 			//Slette order - denne casen er kun for master??
-			completeOrderChan <- ButtonSignal{Floor: msg.Floor, Button: msg.Button}
+			completeOrderBroadcastChan <- ButtonSignal{Floor: msg.Floor, Button: msg.Button}
 		case network.Info:
 			// LAGRER INFO OM HEISEN M/ TILHØRENDE ID, hvor?
 			//elevInfoChan<-msg.ElevInfo	//HVA med å bare utføre arbeitet her
