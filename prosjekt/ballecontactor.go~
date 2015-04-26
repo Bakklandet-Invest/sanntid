@@ -53,7 +53,7 @@ func main(){
 	updateInChan := make(chan network.ElevatorInfo)//Trenger ikke egen case, messageHandler tar ansvar
 	checkMasterChan := make(chan string)
 	//checkMasterChan<-myID	
-	newOrderChan := make(chan ButtonSignal,6969)
+	newOrderChan := make(chan ButtonSignal,69)
 	completeOrderChan := make(chan ButtonSignal)
 	extOrderChan := make(chan ButtonSignal)
 	fromMasterChan := make(chan ButtonSignal)//Kanalen som går inn til elev og gir oppdrag
