@@ -1,0 +1,9 @@
+lagre backup, så heiser kan starte opp igjen der de slapp
+
+legge til ordre fra heiser som mister kontakt
+
+slaver skulle sende ut eksterne ordre på nytt om de ikke fikk tilbake en complete order
+
+master skulle sende ut ordre på nytt hvis den ikke fikk tilbake complete order
+	- vil ikke kræsje med ordre sendt på nytt av slaver til master. vil bare se bort i fra orderen fra slaven
+			hvis den ligger der fra før
