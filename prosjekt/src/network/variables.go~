@@ -41,7 +41,7 @@ type ConnectionUDP struct{
 const ResetConnTime = 9*time.Second
 const NotifyInterval = 6*time.Second
 
-
+var broadcastAddr *net.UDPAddr
 
 var LocalAddress *net.UDPAddr
 

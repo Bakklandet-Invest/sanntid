@@ -14,6 +14,7 @@ const (
 	NewOrder
 	CompletedOrder
 	Info
+	Light
 )
 
 type ElevatorInfo struct{
